@@ -3,35 +3,17 @@ from __future__ import annotations
 import json
 import mimetypes
 import os
-import sqlite3
 from datetime import datetime, timezone
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
 
-try:
-    import psycopg
-    from psycopg.rows import dict_row
-except ImportError:  # SQLite development does not require the PostgreSQL driver.
-    psycopg = None
-    dict_row = None
+import psycopg
+from psycopg.rows import dict_row
 
 
 ROOT = Path(__file__).resolve().parent
-def resolve_db_path() -> Path:
-    explicit_path = os.environ.get("PANTRIFY_DB")
-    if explicit_path:
-        return Path(explicit_path)
-
-    railway_volume = os.environ.get("RAILWAY_VOLUME_MOUNT_PATH")
-    if railway_volume:
-        return Path(railway_volume) / "pantrify.sqlite3"
-
-    return ROOT / "pantrify.sqlite3"
-
-
-DB_PATH = resolve_db_path()
 DATABASE_URL = os.environ.get("DATABASE_URL")
 CATEGORIES = ("Staples", "Fruit & Vege", "Snacks", "Household", "Drinks")
 
@@ -46,39 +28,20 @@ def json_default(value: object) -> str:
     raise TypeError(f"Cannot serialize {type(value).__name__}")
 
 
-DATABASE_ERRORS = (sqlite3.Error,) + ((psycopg.Error,) if psycopg else ())
-
-
 class Database:
     def __init__(self) -> None:
-        if DATABASE_URL:
-            if psycopg is None:
-                raise RuntimeError("DATABASE_URL is set but psycopg is not installed")
-            self.backend = "postgresql"
-            self.connection = psycopg.connect(DATABASE_URL, row_factory=dict_row)
-        else:
-            self.backend = "sqlite"
-            self.connection = sqlite3.connect(DB_PATH, timeout=10)
-            self.connection.row_factory = sqlite3.Row
-            self.connection.execute("PRAGMA foreign_keys = ON")
+        if not DATABASE_URL:
+            raise RuntimeError("DATABASE_URL is required")
+        self.connection = psycopg.connect(DATABASE_URL, row_factory=dict_row)
 
     def execute(self, query: str, params: tuple = ()):
-        if self.backend == "postgresql":
-            query = query.replace("?", "%s")
-        return self.connection.execute(query, params)
+        return self.connection.execute(query.replace("?", "%s"), params)
 
     def executemany(self, query: str, params) -> None:
-        if self.backend == "sqlite":
-            self.connection.executemany(query, params)
-            return
-        query = query.replace("?", "%s")
         with self.connection.cursor() as cursor:
-            cursor.executemany(query, params)
+            cursor.executemany(query.replace("?", "%s"), params)
 
     def executescript(self, script: str) -> None:
-        if self.backend == "sqlite":
-            self.connection.executescript(script)
-            return
         for statement in script.split(";"):
             if statement.strip():
                 self.connection.execute(statement)
@@ -97,28 +60,6 @@ class Database:
 def connection() -> Database:
     return Database()
 
-
-SQLITE_SCHEMA = """
-PRAGMA journal_mode = WAL;
-CREATE TABLE IF NOT EXISTS items (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    category TEXT NOT NULL,
-    quantity TEXT NOT NULL DEFAULT '',
-    created_at TEXT NOT NULL,
-    purchased_at TEXT
-);
-CREATE TABLE IF NOT EXISTS purchases (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    item_id INTEGER,
-    name TEXT NOT NULL,
-    category TEXT NOT NULL,
-    quantity TEXT NOT NULL DEFAULT '',
-    purchased_at TEXT NOT NULL
-);
-CREATE INDEX IF NOT EXISTS idx_items_active ON items(purchased_at, category);
-CREATE INDEX IF NOT EXISTS idx_purchases_name ON purchases(name COLLATE NOCASE, purchased_at DESC);
-"""
 
 POSTGRES_SCHEMA = """
 CREATE TABLE IF NOT EXISTS items (
@@ -144,10 +85,8 @@ CREATE INDEX IF NOT EXISTS idx_purchases_recent ON purchases(purchased_at DESC);
 
 
 def init_db() -> None:
-    if not DATABASE_URL:
-        DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     with connection() as db:
-        db.executescript(POSTGRES_SCHEMA if DATABASE_URL else SQLITE_SCHEMA)
+        db.executescript(POSTGRES_SCHEMA)
 
 def state() -> dict:
     with connection() as db:
@@ -294,7 +233,7 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json({"error": "Not found."}, 404)
         except (ValueError, json.JSONDecodeError):
             self.send_json({"error": "Invalid request."}, 400)
-        except DATABASE_ERRORS as exc:
+        except psycopg.Error as exc:
             print(f"Database error: {exc}")
             self.send_json({"error": "Database error."}, 500)
 
@@ -304,7 +243,7 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", "8000"))
     server = ThreadingHTTPServer(("0.0.0.0", port), Handler)
     print(f"Pantrify is running at http://localhost:{port}")
-    print(f"Database: PostgreSQL" if DATABASE_URL else f"Database: {DB_PATH}")
+    print("Database: PostgreSQL")
     print("Open the same address using this computer's local IP to share it on your Wi-Fi.")
     try:
         server.serve_forever()
