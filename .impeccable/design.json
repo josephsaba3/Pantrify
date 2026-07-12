@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-12T10:30:00Z",
+  "title": "Design System: Pantrify",
+  "extensions": {
+    "colorMeta": {
+      "ink": { "role": "primary", "displayName": "Checklist Ink", "canonical": "#171916", "tonalRamp": ["#171916", "#30332F", "#515650", "#747B75", "#9DA39E", "#C4C8C4", "#E7E9E7", "#F8F9F7"] },
+      "fruit-vege": { "role": "secondary", "displayName": "Fruit Green", "canonical": "#4EA960", "tonalRamp": ["#17351D", "#24522D", "#33723E", "#4EA960", "#79C486", "#A7DAAE", "#D5ECD8", "#ECF6ED"] },
+      "drinks": { "role": "secondary", "displayName": "Drinks Blue", "canonical": "#59A7CC", "tonalRamp": ["#173746", "#225369", "#32738F", "#59A7CC", "#83C0DC", "#AED8E9", "#D6EAF3", "#E8F4FA"] },
+      "snacks": { "role": "secondary", "displayName": "Snack Amber", "canonical": "#D69B1F", "tonalRamp": ["#452F06", "#68480B", "#936612", "#D69B1F", "#E5B956", "#EFD28D", "#F7E7C3", "#FBF4E4"] },
+      "household": { "role": "secondary", "displayName": "Household Red", "canonical": "#CC5757", "tonalRamp": ["#451919", "#692626", "#913737", "#CC5757", "#DE8383", "#EBADAD", "#F5D3D3", "#FBEAEA"] },
+      "staples": { "role": "secondary", "displayName": "Staples Violet", "canonical": "#8569C8", "tonalRamp": ["#291E4A", "#3E306D", "#594594", "#8569C8", "#A691D8", "#C5B6E6", "#E2DAF2", "#F1EEF9"] }
+    },
+    "typographyMeta": {
+      "headline": { "displayName": "Headline", "purpose": "Page-level task framing only." },
+      "body": { "displayName": "Body", "purpose": "Products, inputs, and readable content." },
+      "label": { "displayName": "Label", "purpose": "Category names, counts, and compact controls." }
+    },
+    "shadows": [
+      { "name": "toast", "value": "0 6px 16px rgba(23,25,22,0.24)", "purpose": "Temporary toast feedback only." }
+    ],
+    "motion": [
+      { "name": "state", "value": "180ms cubic-bezier(0.22, 1, 0.36, 1)", "purpose": "Hover, focus, checkbox, and tab state changes." }
+    ],
+    "breakpoints": [
+      { "name": "compact", "value": "420px" },
+      { "name": "mobile", "value": "520px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The definitive add action.",
+      "html": "<button class=\"ds-btn-primary\">+ Add</button>",
+      "css": ".ds-btn-primary{height:46px;padding:0 16px;border:0;border-radius:8px;background:var(--ink,#171916);color:#fff;font:700 1rem Inter,system-ui,sans-serif;transition:background .18s,transform .18s}.ds-btn-primary:hover{background:#30332f}.ds-btn-primary:active{transform:translateY(1px)}.ds-btn-primary:focus-visible{outline:3px solid #59a7cc66;outline-offset:2px}"
+    },
+    {
+      "name": "Product Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Fast, familiar grocery entry.",
+      "html": "<input class=\"ds-input\" placeholder=\"Add an item...\">",
+      "css": ".ds-input{height:46px;width:280px;padding:0 14px;border:1px solid var(--line,#d9ddd8);border-radius:8px;background:#fff;color:#171916;font:400 1rem Inter,system-ui,sans-serif}.ds-input:focus{border-color:#747b75;outline:3px solid #59a7cc33}.ds-input::placeholder{color:#747b75}"
+    },
+    {
+      "name": "Category Group",
+      "kind": "custom",
+      "refersTo": "list-group",
+      "description": "A flat, colour-owned group of grocery rows.",
+      "html": "<section class=\"ds-group\"><header><i></i> FRUIT &amp; VEGE <small>2/3</small></header><div><span class=\"ds-check\"></span>Baby spinach</div><div><span class=\"ds-check\"></span>Garlic</div></section>",
+      "css": ".ds-group{overflow:hidden;width:320px;border:1px solid #b9dfc0;border-radius:12px;background:#ecf6ed;color:#171916;font:400 1rem Inter,system-ui,sans-serif}.ds-group header{padding:11px 14px;border-bottom:1px solid #cde6d1;font-size:.75rem;font-weight:750;letter-spacing:.04em}.ds-group header i{display:inline-block;width:8px;height:8px;margin-right:8px;border-radius:2px;background:#4ea960}.ds-group small{margin-left:8px;color:#747b75}.ds-group div{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid #d9eadc}.ds-group div:last-child{border-bottom:0}.ds-check{width:22px;height:22px;border:2px solid #c6ccc7;border-radius:6px;background:#fff}"
+    },
+    {
+      "name": "Tab Navigation",
+      "kind": "nav",
+      "description": "Two-view navigation with a direct active underline.",
+      "html": "<nav class=\"ds-tabs\"><button class=\"active\">Shopping list <b>4</b></button><button>Last time</button></nav>",
+      "css": ".ds-tabs{display:flex;gap:24px;border-bottom:1px solid #d9ddd8}.ds-tabs button{position:relative;padding:12px 0;border:0;background:none;color:#747b75;font:700 .875rem Inter,system-ui,sans-serif}.ds-tabs button.active{color:#171916}.ds-tabs button.active:after{content:'';position:absolute;right:0;bottom:-1px;left:0;height:3px;background:#171916}.ds-tabs b{padding:2px 6px;border-radius:999px;background:#f0f1ef;font-size:.75rem}"
+    },
+    {
+      "name": "Checked Product Row",
+      "kind": "custom",
+      "description": "A completed grocery item that remains visible and legible.",
+      "html": "<div class=\"ds-row-done\"><span>✓</span><del>Whole milk</del><small>Bought 12 July</small></div>",
+      "css": ".ds-row-done{display:flex;align-items:center;gap:10px;padding:12px 14px;background:#e8f4fa;color:#747b75;font:400 1rem Inter,system-ui,sans-serif}.ds-row-done span{display:grid;place-items:center;width:22px;height:22px;border-radius:6px;background:#59a7cc;color:#fff;font-weight:700}.ds-row-done small{margin-left:auto;font-size:.75rem}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Colour-Coded Checklist",
+    "overview": "Pantrify is a compact household utility that should disappear into the task. A clean white canvas, crisp black typography, and clearly bounded category groups make the shared list instantly scannable on a phone. Colour is functional: every category owns one restrained hue and a very light tonal surface.",
+    "keyCharacteristics": ["White, high-contrast working canvas", "Compact, one-handed mobile interaction", "Flat category containers with lightly tinted backgrounds", "Strong black controls and typography", "Colour used for organization rather than decoration"],
+    "rules": [
+      { "name": "The Category Ownership Rule", "body": "Each category uses exactly one saturated marker and one matching pale surface. Never mix category colours within one group.", "section": "colors" },
+      { "name": "The White Canvas Rule", "body": "The application background remains white. Beige, cream, and parchment surfaces are prohibited.", "section": "colors" },
+      { "name": "The Grocery-Aisle Rule", "body": "Product names always win the hierarchy. Metadata must remain visibly secondary without falling below accessible contrast.", "section": "typography" },
+      { "name": "The Flat-by-Default Rule", "body": "If a permanent element needs a wide shadow to feel distinct, its boundary or tonal contrast is wrong.", "section": "elevation" }
+    ],
+    "dos": ["Do keep the canvas white and typography near-black.", "Do use colour-coded category groups to make scanning faster.", "Do keep controls at least 44px tall on mobile.", "Do use compact rows and familiar checkbox affordances.", "Do preserve clear focus states, strong contrast, and reduced-motion behavior."],
+    "donts": ["Don't use beige, cream, parchment, or warm paper backgrounds.", "Don't make the product cute with doodles, mascots, novelty icons, or playful type.", "Don't make it corporate with dashboard chrome, excessive metrics, or formal enterprise copy.", "Don't use dark mode as the default visual language.", "Don't clutter the list with redundant labels, cards, effects, or controls.", "Don't add decorative ambient blobs, page-load choreography, rotation, bounce, or ornamental motion.", "Don't pair one-pixel borders with wide decorative shadows."]
+  }
+}

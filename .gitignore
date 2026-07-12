@@ -1,0 +1,4 @@
+pantrify.sqlite3
+pantrify.sqlite3-shm
+pantrify.sqlite3-wal
+__pycache__/
