@@ -1,78 +1,17 @@
-const $ = (selector) => document.querySelector(selector);
+const $ = selector => document.querySelector(selector);
 const categories = ['Staples', 'Fruit & Vege', 'Snacks', 'Household', 'Drinks'];
-let current = { items: [], recent: [] };
-
-$('#category').innerHTML = categories.map(c => `<option>${c}</option>`).join('');
-
-function escapeHtml(value) {
-  return String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
-}
-function dateText(value) {
-  if (!value) return '';
-  return new Intl.DateTimeFormat(undefined, { day:'numeric', month:'long' }).format(new Date(value));
-}
-function toast(message) {
-  const el = $('#toast'); el.textContent = message; el.classList.add('show');
-  clearTimeout(toast.timer); toast.timer = setTimeout(() => el.classList.remove('show'), 2200);
-}
-async function api(path, options = {}) {
-  const response = await fetch(path, { headers:{'Content-Type':'application/json'}, ...options });
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error || 'Something went wrong.');
-  return data;
-}
-function render() {
-  const active = current.items.filter(item => !item.purchased_at);
-  const purchased = current.items.filter(item => item.purchased_at);
-  $('#count').textContent = active.length;
-  const groups = categories.map(category => {
-    const items = active.filter(item => item.category === category);
-    if (!items.length && category !== 'Staples') return '';
-    if (!items.length) return '<div class="category staples-empty"><div class="category-title">Staples</div><p>Your everyday essentials start here.</p></div>';
-    return `<div class="category"><div class="category-title">${escapeHtml(category)}</div>${items.map((item, index) => `
-      <article class="item" style="animation-delay:${Math.min(index * 45, 180)}ms">
-        <button class="check" data-purchase="${item.id}" aria-label="Mark ${escapeHtml(item.name)} purchased">✓</button>
-        <div class="item-copy"><div class="item-name">${escapeHtml(item.name)}</div>
-          ${item.last_purchased ? `<div class="item-meta">Last bought ${dateText(item.last_purchased)}</div>` : '<div class="item-meta">New to your list</div>'}
-        </div>${item.quantity ? `<span class="qty">${escapeHtml(item.quantity)}</span>` : ''}
-      </article>`).join('')}</div>`;
-  }).join('');
-  const checked = purchased.length ? `<div class="checked-section"><div class="checked-heading"><span>Checked off</span><button data-clear-purchased>Clear checked</button></div>${purchased.map(item => `
-    <article class="item purchased"><button class="check" disabled aria-label="Purchased">✓</button><div class="item-copy"><div class="item-name">${escapeHtml(item.name)}</div><div class="item-meta">Bought ${dateText(item.purchased_at)}</div></div>${item.quantity ? `<span class="qty">${escapeHtml(item.quantity)}</span>` : ''}</article>`).join('')}</div>` : '';
-  $('#list-view').innerHTML = groups + checked || '<div class="empty"><div class="empty-icon">✓</div><strong>Your list is clear</strong><p>Add something above when you think of it.</p></div>';
-  $('#history-view').innerHTML = current.recent.length ? `<div class="category">${current.recent.map(item => `<div class="history-item"><div class="item-copy"><div class="item-name">${escapeHtml(item.name)}</div><div class="item-meta">${escapeHtml(item.category)} · Bought ${dateText(item.purchased_at)}${item.purchase_count > 1 ? ` · ${item.purchase_count} times` : ''}</div></div><button data-repeat="${escapeHtml(item.name)}">＋ Add</button></div>`).join('')}</div>` : '<div class="empty"><div class="empty-icon">☷</div><strong>No purchases yet</strong><p>Checked items will be remembered here.</p></div>';
-}
-async function refresh() {
-  const next = await api('/api/state');
-  if (JSON.stringify(next) !== JSON.stringify(current)) {
-    current = next;
-    render();
-  }
-}
-
-$('#add-form').addEventListener('submit', async event => {
-  event.preventDefault(); $('#error').textContent = '';
-  const form = event.currentTarget;
-  const body = Object.fromEntries(new FormData(form));
-  try { current = await api('/api/items', { method:'POST', body:JSON.stringify(body) }); render(); form.reset(); $('#name').focus(); }
-  catch (error) { $('#error').textContent = error.message; }
-});
-document.addEventListener('click', async event => {
-  const purchase = event.target.closest('[data-purchase]');
-  const repeat = event.target.closest('[data-repeat]');
-  const clearPurchased = event.target.closest('[data-clear-purchased]');
-  const newList = event.target.closest('[data-new-list]');
-  try {
-    if (purchase) { const card = purchase.closest('.item'); card.classList.add('purchasing'); await new Promise(resolve => setTimeout(resolve, matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 380)); current = await api(`/api/items/${purchase.dataset.purchase}/purchase`, { method:'POST', body:'{}' }); render(); toast('Added to purchase history ✓'); }
-    if (repeat) { current = await api('/api/repeat', { method:'POST', body:JSON.stringify({name:repeat.dataset.repeat}) }); render(); toast('Added to your list'); }
-    if (clearPurchased) { current = await api('/api/items/clear-purchased', { method:'POST', body:'{}' }); render(); toast('Checked items cleared'); }
-    if (newList && confirm('Start a new list? This clears every item on the current list.')) { current = await api('/api/items/new-list', { method:'POST', body:'{}' }); render(); toast('New list ready'); }
-  } catch (error) { toast(error.message); }
-});
-$('.tabs').addEventListener('click', event => {
-  const tab = event.target.closest('[data-tab]'); if (!tab) return;
-  document.querySelectorAll('.tab').forEach(el => el.classList.toggle('active', el === tab));
-  $('#list-view').hidden = tab.dataset.tab !== 'list'; $('#history-view').hidden = tab.dataset.tab !== 'history';
-});
-refresh().catch(error => { $('#list-view').innerHTML = `<div class="empty">${escapeHtml(error.message)}</div>`; });
-setInterval(refresh, 5000);
+const categoryClass = {'Staples':'staples','Fruit & Vege':'fruit-vege','Snacks':'snacks','Household':'household','Drinks':'drinks'};
+let current = {items:[], recent:[]};
+$('#category').innerHTML = categories.map(category => `<option>${category}</option>`).join('');
+function escapeHtml(value){return String(value??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
+function dateText(value){return value?new Intl.DateTimeFormat(undefined,{day:'numeric',month:'long'}).format(new Date(value)):'';}
+function toast(message){const el=$('#toast');el.textContent=message;el.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.remove('show'),2200);}
+async function api(path,options={}){const response=await fetch(path,{headers:{'Content-Type':'application/json'},...options});const data=await response.json();if(!response.ok)throw new Error(data.error||'Something went wrong.');return data;}
+function itemRow(item){const purchased=Boolean(item.purchased_at);const meta=purchased?`Bought ${dateText(item.purchased_at)}`:item.last_purchased?`Last bought ${dateText(item.last_purchased)}`:'';return `<article class="item-row${purchased?' purchased':''}"><button class="check" ${purchased?'disabled':`data-purchase="${item.id}"`} aria-label="${purchased?'Purchased':`Mark ${escapeHtml(item.name)} purchased`}">✓</button><div class="item-copy"><div class="item-name">${escapeHtml(item.name)}</div>${meta?`<div class="item-meta">${meta}</div>`:''}</div>${item.quantity?`<span class="quantity">${escapeHtml(item.quantity)}</span>`:''}</article>`;}
+function categoryGroup(category){const items=current.items.filter(item=>item.category===category);if(!items.length&&category!=='Staples')return'';const remaining=items.filter(item=>!item.purchased_at).length;const body=items.length?items.map(itemRow).join(''):'<div class="category-empty">Your recurring essentials will appear here.</div>';return `<section class="category-group ${categoryClass[category]}"><header class="category-header"><span class="category-marker" aria-hidden="true"></span><h2>${escapeHtml(category)}</h2><span class="category-count">${remaining}/${items.length}</span></header><div class="category-items">${body}</div></section>`;}
+function render(){const active=current.items.filter(item=>!item.purchased_at);const purchased=current.items.filter(item=>item.purchased_at);$('#count').textContent=active.length;$('#remaining-count').textContent=active.length;$('#done-count').textContent=purchased.length;$('#list-view').innerHTML=categories.map(categoryGroup).join('');$('#history-view').innerHTML=current.recent.length?`<div class="history-list">${current.recent.map(item=>`<article class="history-row"><span class="history-marker ${categoryClass[item.category]||''}" aria-hidden="true"></span><div class="item-copy"><div class="item-name">${escapeHtml(item.name)}</div><div class="item-meta">${escapeHtml(item.category)} · Bought ${dateText(item.purchased_at)}${item.purchase_count>1?` · ${item.purchase_count} times`:''}</div></div><button class="button button-small" data-repeat="${escapeHtml(item.name)}">＋ Add</button></article>`).join('')}</div>`:'<div class="empty-state"><strong>No purchases yet</strong><p>Checked items will be remembered here.</p></div>';}
+async function refresh(){const next=await api('/api/state');if(JSON.stringify(next)!==JSON.stringify(current)){current=next;render();}}
+$('#add-form').addEventListener('submit',async event=>{event.preventDefault();const form=event.currentTarget;const submit=form.querySelector('[type="submit"]');const body=Object.fromEntries(new FormData(form));$('#error').textContent='';submit.disabled=true;submit.textContent='Adding…';try{current=await api('/api/items',{method:'POST',body:JSON.stringify(body)});render();form.reset();$('#name').focus();}catch(error){$('#error').textContent=error.message;}finally{submit.disabled=false;submit.innerHTML='<span aria-hidden="true">＋</span> Add';}});
+document.addEventListener('click',async event=>{const purchase=event.target.closest('[data-purchase]');const repeat=event.target.closest('[data-repeat]');const newList=event.target.closest('[data-new-list]');try{if(purchase){const row=purchase.closest('.item-row');row.classList.add('checking');await new Promise(resolve=>setTimeout(resolve,matchMedia('(prefers-reduced-motion: reduce)').matches?0:180));current=await api(`/api/items/${purchase.dataset.purchase}/purchase`,{method:'POST',body:'{}'});render();toast('Added to purchase history');}if(repeat){current=await api('/api/repeat',{method:'POST',body:JSON.stringify({name:repeat.dataset.repeat})});render();toast('Added to your list');}if(newList&&confirm('Start a new list? Non-staple items will be cleared.')){current=await api('/api/items/new-list',{method:'POST',body:'{}'});render();toast('New list ready');}}catch(error){toast(error.message);if(purchase)purchase.closest('.item-row')?.classList.remove('checking');}});
+$('.tabs').addEventListener('click',event=>{const tab=event.target.closest('[data-tab]');if(!tab)return;document.querySelectorAll('.tab').forEach(el=>{const active=el===tab;el.classList.toggle('active',active);el.setAttribute('aria-selected',active);});$('#list-view').hidden=tab.dataset.tab!=='list';$('#history-view').hidden=tab.dataset.tab!=='history';});
+refresh().catch(error=>{$('#list-view').innerHTML=`<div class="empty-state"><strong>Couldn’t load the list</strong><p>${escapeHtml(error.message)}</p></div>`;});setInterval(refresh,5000);
