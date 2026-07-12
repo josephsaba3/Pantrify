@@ -12,7 +12,19 @@ from urllib.parse import urlparse
 
 
 ROOT = Path(__file__).resolve().parent
-DB_PATH = Path(os.environ.get("PANTRIFY_DB", ROOT / "pantrify.sqlite3"))
+def resolve_db_path() -> Path:
+    explicit_path = os.environ.get("PANTRIFY_DB")
+    if explicit_path:
+        return Path(explicit_path)
+
+    railway_volume = os.environ.get("RAILWAY_VOLUME_MOUNT_PATH")
+    if railway_volume:
+        return Path(railway_volume) / "pantrify.sqlite3"
+
+    return ROOT / "pantrify.sqlite3"
+
+
+DB_PATH = resolve_db_path()
 CATEGORIES = ("Staples", "Fruit & Vege", "Snacks", "Household", "Drinks")
 
 
@@ -203,6 +215,7 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", "8000"))
     server = ThreadingHTTPServer(("0.0.0.0", port), Handler)
     print(f"Pantrify is running at http://localhost:{port}")
+    print(f"Database: {DB_PATH}")
     print("Open the same address using this computer's local IP to share it on your Wi-Fi.")
     try:
         server.serve_forever()
