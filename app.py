@@ -68,8 +68,10 @@ class Database:
         return self.connection.execute(query, params)
 
     def executemany(self, query: str, params) -> None:
-        if self.backend == "postgresql":
-            query = query.replace("?", "%s")
+        if self.backend == "sqlite":
+            self.connection.executemany(query, params)
+            return
+        query = query.replace("?", "%s")
         with self.connection.cursor() as cursor:
             cursor.executemany(query, params)
 

@@ -12,18 +12,11 @@ Open `http://localhost:8000`. To share it with a partner on the same Wi-Fi, find
 
 The database is created automatically as `pantrify.sqlite3`. Set `PANTRIFY_DB` to store it elsewhere, or `PORT` to use a different port.
 
-## Persistent SQLite on Railway
+## PostgreSQL on Railway
 
-Railway's deployment filesystem is replaced on every deploy, so the SQLite file must live on a Railway Volume.
+When Railway provides `DATABASE_URL`, Pantrify automatically uses PostgreSQL. No additional database path variable is required. Install dependencies with `pip install -r requirements.txt`; Railway detects `requirements.txt` during deployment.
 
-1. Open the Pantrify service in Railway.
-2. Add a Volume and mount it at `/data`.
-3. Redeploy or restart the service.
-
-Pantrify automatically detects Railway's `RAILWAY_VOLUME_MOUNT_PATH` variable and stores the database at `/data/pantrify.sqlite3`. Purchase history and the shared list then survive Git deployments and service restarts.
-
-`PANTRIFY_DB` remains the highest-priority override when you need a custom database location.
-
+If `DATABASE_URL` is absent, Pantrify falls back to the local SQLite file for zero-setup development. `PANTRIFY_DB` can customize that local SQLite path.
 ## Features
 
 - Shared list split into Staples, Fruit & Vege, Snacks, Household, and Drinks
