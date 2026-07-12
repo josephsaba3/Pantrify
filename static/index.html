@@ -19,6 +19,7 @@
         <div class="list-status" aria-live="polite"><span>Bree is 100% cute</span><span> ·</span> 
           <strong id="remaining-count">0</strong> remaining <span>·</span> <strong id="done-count">0</strong> done</div>
         <button class="button button-secondary" data-new-list>New list</button>
+        <button class="icon-button" type="button" data-open-settings aria-label="Open settings" title="Settings">&#9881;</button>
       </div>
     </div>
   </header>
@@ -35,9 +36,15 @@
     <div class="tabs" role="tablist" aria-label="List views">
       <button class="tab active" type="button" role="tab" aria-selected="true" aria-controls="list-view" data-tab="list"><span class="tab-icon" aria-hidden="true">☷</span> Shopping list <span class="count-badge" id="count">0</span></button>
       <button class="tab" type="button" role="tab" aria-selected="false" aria-controls="history-view" data-tab="history"><span class="tab-icon" aria-hidden="true">◷</span> Last time</button>
+    <button class="tab" type="button" role="tab" aria-selected="false" aria-controls="settings-view" data-tab="settings"><span class="tab-icon" aria-hidden="true">&#9881;</span> Settings</button>
     </div>
     <section id="list-view" role="tabpanel"></section>
     <section id="history-view" role="tabpanel" hidden></section>
+    <section id="settings-view" role="tabpanel" hidden>
+      <div class="settings-heading"><h1>Categories</h1><p>Add categories or change their name and colour.</p></div>
+      <div id="category-settings"></div>
+      <form id="category-form" class="category-form"><label for="new-category">New category</label><div class="category-form-row"><input id="new-category" name="name" maxlength="80" placeholder="e.g. Bakery" required><input class="color-input" type="color" name="color" value="#747B75" aria-label="Category colour"><button class="button button-primary" type="submit">Add category</button></div><p id="category-error" class="form-error" role="alert"></p></form>
+    </section>
   </main>
   <div id="toast" role="status" aria-live="polite"></div>
   <script src="/static/app.js"></script>

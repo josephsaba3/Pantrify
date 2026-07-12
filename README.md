@@ -18,7 +18,8 @@ Add a `DATABASE_URL` reference variable to the Pantrify service using `${{Postgr
 ## Features
 
 - Shared list split into Staples, Fruit & Vege, Snacks, Household, and Drinks
-- Optional quantity or note on each item
+- Edit a listed product, including its category and quantity or note
+- Add and rename colour-coded categories from Settings
 - Checked items are logged as purchases
 - “Last time” history with one-tap re-adding
 - Previous purchase date shown when a familiar item returns to the list
