@@ -256,6 +256,22 @@ class Handler(BaseHTTPRequestHandler):
                         (item_id, item["name"], item["category"], item["quantity"], purchased_at),
                     )
                 self.send_json(state())
+            elif path.startswith("/api/items/") and path.endswith("/unpurchase"):
+                item_id = int(path.split("/")[3])
+                with connection() as db:
+                    item = db.execute("SELECT purchased_at FROM items WHERE id = ?", (item_id,)).fetchone()
+                    if not item or item["purchased_at"] is None:
+                        return self.send_json({"error": "Purchased item not found."}, 404)
+                    db.execute(
+                        """DELETE FROM purchases WHERE id = (
+                               SELECT id FROM purchases
+                               WHERE item_id = ?
+                               ORDER BY purchased_at DESC, id DESC LIMIT 1
+                           )""",
+                        (item_id,),
+                    )
+                    db.execute("UPDATE items SET purchased_at = NULL WHERE id = ?", (item_id,))
+                self.send_json(state())
             elif path == "/api/repeat":
                 name = str(data.get("name", "")).strip()
                 with connection() as db:
