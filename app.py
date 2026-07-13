@@ -85,6 +85,8 @@ CREATE TABLE IF NOT EXISTS categories (
     position INTEGER NOT NULL DEFAULT 0,
     is_staple BOOLEAN NOT NULL DEFAULT FALSE
 );
+ALTER TABLE items DROP CONSTRAINT IF EXISTS items_category_check;
+ALTER TABLE purchases DROP CONSTRAINT IF EXISTS purchases_category_check;
 CREATE INDEX IF NOT EXISTS idx_items_active ON items(category, id DESC) WHERE purchased_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_purchases_name ON purchases(LOWER(name), purchased_at DESC);
 CREATE INDEX IF NOT EXISTS idx_purchases_recent ON purchases(purchased_at DESC);
