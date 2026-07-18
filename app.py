@@ -219,6 +219,7 @@ class Handler(BaseHTTPRequestHandler):
                     db.execute("INSERT INTO categories(name, color, position) VALUES (?, ?, ?)", (name, color, position))
                 self.send_json(state(), 201)
             elif path == "/api/items/new-list":
+                keep_unchecked = data.get("keep_unchecked") is True
                 with connection() as db:
                     staple = db.execute("SELECT name FROM categories WHERE is_staple ORDER BY id LIMIT 1").fetchone()
                     staple_name = staple["name"] if staple else "Staples"
@@ -233,7 +234,15 @@ class Handler(BaseHTTPRequestHandler):
                     recurring = {}
                     for staple in (*current_staples, *purchased_staples):
                         recurring.setdefault(staple["name"].casefold(), (staple["name"], staple["quantity"]))
-                    db.execute("DELETE FROM items")
+                    if keep_unchecked:
+                        db.execute("DELETE FROM items WHERE purchased_at IS NOT NULL")
+                        active_names = {
+                            item["name"].casefold()
+                            for item in db.execute("SELECT name FROM items WHERE purchased_at IS NULL").fetchall()
+                        }
+                        recurring = {key: item for key, item in recurring.items() if key not in active_names}
+                    else:
+                        db.execute("DELETE FROM items")
                     db.executemany(
                         "INSERT INTO items(name, category, quantity, created_at) VALUES (?, ?, ?, ?)",
                         ((name, staple_name, quantity, now_iso()) for name, quantity in recurring.values()),

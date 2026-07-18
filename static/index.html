@@ -6,6 +6,8 @@
   <meta name="theme-color" content="#ffffff">
   <title>Pantrify</title>
   <link rel="stylesheet" href="/static/styles.css?v=3">
+  <link rel="stylesheet" href="/static/autocomplete.css?v=1">
+  <link rel="stylesheet" href="/static/new-list-dialog.css?v=1">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to shopping list</a>
@@ -25,7 +27,7 @@
   </header>
   <main id="main">
     <form id="add-form" class="add-form">
-      <div class="name-field"><label for="name">Add an item</label><input id="name" name="name" placeholder="Add an item..." maxlength="120" required autocomplete="off" list="product-suggestions"><datalist id="product-suggestions"></datalist></div>
+      <div class="name-field"><label for="name">Add an item</label><input id="name" name="name" placeholder="Add an item..." maxlength="120" required autocomplete="off" role="combobox" aria-autocomplete="list" aria-controls="product-suggestions" aria-expanded="false"><div id="product-suggestions" class="product-suggestions" role="listbox" hidden></div></div>
       <div class="add-options">
         <label class="visually-hidden" for="category">Category</label><select id="category" name="category"></select>
         <label class="visually-hidden" for="quantity">Quantity or note</label><input id="quantity" name="quantity" placeholder="Qty / note" maxlength="40">
@@ -46,7 +48,18 @@
       <form id="category-form" class="category-form"><label for="new-category">New category</label><div class="category-form-row"><input id="new-category" name="name" maxlength="80" placeholder="e.g. Bakery" required><input class="color-input" type="color" name="color" value="#747B75" aria-label="Category colour"><button class="button button-primary" type="submit">Add category</button></div><p id="category-error" class="form-error" role="alert"></p></form>
     </section>
   </main>
+  <dialog id="new-list-dialog" class="choice-dialog" aria-labelledby="new-list-title" aria-describedby="new-list-summary">
+    <form method="dialog">
+      <h2 id="new-list-title">Start a new list?</h2>
+      <p id="new-list-summary"></p>
+      <div class="choice-dialog-actions">
+        <button class="button button-secondary" value="cancel">Cancel</button>
+        <button class="button button-secondary" value="discard">Start without them</button>
+        <button class="button button-primary" value="keep">Transfer items</button>
+      </div>
+    </form>
+  </dialog>
   <div id="toast" role="status" aria-live="polite"></div>
-  <script src="/static/app.js?v=7"></script>
+  <script src="/static/app.js?v=10"></script>
 </body>
 </html>

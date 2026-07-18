@@ -1,0 +1,8 @@
+.name-field{position:relative}
+.product-suggestions{position:absolute;z-index:5;top:100%;right:0;left:0;max-height:min(280px,50vh);overflow-y:auto;border:1px solid var(--line);border-radius:var(--radius-control);background:#fff}
+.product-suggestion{display:flex;width:100%;min-height:48px;align-items:center;justify-content:space-between;gap:var(--space-md);border:0;border-bottom:1px solid var(--line);background:#fff;color:var(--ink);padding:var(--space-sm) var(--space-md);text-align:left}
+.product-suggestion:last-child{border-bottom:0}
+.product-suggestion strong{overflow-wrap:anywhere;font-weight:600}
+.product-suggestion span{flex:none;color:var(--muted);font-size:.75rem}
+.product-suggestion[aria-selected="true"]{background:var(--surface)}
+@media(hover:hover){.product-suggestion:hover{background:var(--surface)}}
