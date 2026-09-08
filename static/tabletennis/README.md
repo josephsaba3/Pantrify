@@ -8,7 +8,7 @@ The original paddle movement, aiming, ball physics, and match rendering are reta
 
 ## Game flow
 
-Press Play, choose your country, choose **World mode**, **Finals system**, or **CPU Handicap**, then choose **Easy**, **Medium**, or **Hard**.
+Press Play, choose your country, choose **World mode**, **Finals system**, or **CPU Handicap**, then choose **Easy**, **Medium**, **Challenging**, or **Hard**.
 
 - World mode keeps the original tour and its saved progress.
 - Finals draws 32 distinct countries, including yours, into a single-elimination bracket: round of 32, round of 16, quarterfinals, semifinals, final.
@@ -18,7 +18,7 @@ Press Play, choose your country, choose **World mode**, **Finals system**, or **
 
 CPU Handicap is a five-stage comeback challenge against one CPU opponent. You start each match at 0; the CPU starts at 6, then 7, 8, 9, and 10 as you win. A loss keeps the same stage available to retry. Clearing 0-10 completes the challenge and unlocks Play again. Normal win-by-two scoring applies, so the last stage needs at least a 12-10 win. Progress saves separately for each country and difficulty, independently of World and Finals. Restarting or quitting a paused match lets you replay its original head start.
 
-Difficulty applies to all three modes. Easy gives the opponent slower reactions, gentler returns, less spin, and larger placement errors when stretched. Medium adds speed and variation. Hard reacts and recovers faster, covers more ground, uses stronger spin, and aims more often away from the player's current position. Its movement and shot speeds remain capped; it can still miss.
+Difficulty applies to all three modes. Easy gives the opponent slower reactions, gentler returns, less spin, and larger placement errors when stretched. Medium adds speed and variation. Challenging sits halfway between Medium and Hard for reaction time, movement, recovery, accuracy, return pace, and spin. Hard reacts and recovers faster, covers more ground, uses stronger spin, and aims more often away from the player's current position. Its movement and shot speeds remain capped; it can still miss.
 
 Player paddle movement, shot power limits, and ball physics are unchanged. World tour progress is shared across difficulty choices; Finals keeps each level separate. Existing finals saves from before this feature resume under Easy with the same draw and completed results.
 
@@ -44,7 +44,7 @@ Run `node reference-game/verify.cjs` if Node is available. It checks the source 
 
 Run `node reference-game/finals.test.cjs` for 12 finals checks covering unique 32-country draws, five wins, elimination in every round, saved/reloaded progress, invalid saves, World isolation, pause/restart/quit, duplicate results, immediate next-round transitions, and storage write failures.
 
-Run `node reference-game/difficulty.test.cjs` for 9 difficulty checks covering World and Finals at three viewport sizes, per-level saves, legacy migration, reaction timing at 30/60/144 FPS, motion limits, shot pace/spin/placement, unchanged player strokes, and real ball-to-opponent contact in a seeded 30-shot comparison. That comparison is a regression scenario, not a player win-rate estimate.
+Run `node reference-game/difficulty.test.cjs` for 9 difficulty checks covering all four levels in all three modes at three viewport sizes, per-level saves, legacy migration, reaction timing at 30/60/144 FPS, motion limits, shot pace/spin/placement, unchanged player strokes, and real ball-to-opponent contact in a seeded 30-shot comparison. That comparison is a regression scenario, not a player win-rate estimate.
 
 Run `node reference-game/handicap.test.cjs` for 11 CPU Handicap checks: five actual starting scores, wins/losses, deuce, completion, pause/restart/quit, saved progress, country/difficulty isolation, failed storage, World/Finals score isolation, and immediate next-stage transitions.
 

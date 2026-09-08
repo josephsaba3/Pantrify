@@ -15,7 +15,7 @@ function nextResult(state, won) {
 }
 
 test("five wins progress exactly through 6, 7, 8, 9, 10 and complete the challenge", () => {
-  for (const difficulty of ["easy", "medium", "hard"]) {
+  for (const difficulty of ["easy", "medium", "challenging", "hard"]) {
     let state = H.create(0, countries, difficulty, () => 0.5);
     const opponent = state.opponentId;
     assert.notEqual(opponent, 0);

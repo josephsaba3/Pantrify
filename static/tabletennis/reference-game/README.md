@@ -4,7 +4,7 @@ Open `index.html` directly. The game uses local scripts, images, and audio; a se
 
 `game.js` is the exact bundle supplied in `Downloads.zip`, where it was named `Table Tennis World Tour_files/a_data/TweenMax.min_0op3.js`. It includes the libraries and the game itself. Paddle movement, aiming, ball physics, and match rendering have not been rewritten or tuned.
 
-`game-modes.js` extends the original global menu and match-completion functions. Play leads to country selection, World mode, Finals system, or CPU Handicap, then Easy, Medium, or Hard. World keeps the original tour. Finals uses `finals-tournament.js` for a 32-country single-elimination draw with five rounds, per-country/per-level saved progress, real player scores, simulated other matches, and a complete results bracket. `game-modes.css` styles the new screens using the original imagery and a numeric head-start preview.
+`game-modes.js` extends the original global menu and match-completion functions. Play leads to country selection, World mode, Finals system, or CPU Handicap, then Easy, Medium, Challenging, or Hard. World keeps the original tour. Finals uses `finals-tournament.js` for a 32-country single-elimination draw with five rounds, per-country/per-level saved progress, real player scores, simulated other matches, and a complete results bracket. `game-modes.css` styles the new screens using the original imagery and a numeric head-start preview.
 
 Finals saves use `finals32:v1:<countryId>:<difficulty>` within the local platform's namespace; they do not write World tour progress. Older `finals32:v1:<countryId>` draws without a difficulty migrate to Easy without replacing their original entry. Only completed matches are saved. Quitting or reloading during a match lets you replay that same opponent. Invalid saves start a fresh draw; blocked browser storage falls back to session memory.
 
@@ -18,6 +18,7 @@ During an active handicap match, `game-modes.js` supplies `user_score: 0` and th
 | --- | --- | --- | --- | --- |
 | Easy | 280-380 ms | 340 | 0.41 | 0.23 |
 | Medium | 140-220 ms | 520 | 0.49 | 0.52 |
+| Challenging | 100-170 ms | 620 | 0.525 | 0.68 |
 | Hard | 60-120 ms | 720 | 0.56 | 0.84 |
 
 *These are source-engine units, not physical m/s or RPM. Pursuit and distance can make movement slower than the cap. The selected level replaces the original AI skill ramp in World mode, while its countries, visual progression, and saved position remain intact.
@@ -37,4 +38,4 @@ node reference-game/difficulty.test.cjs
 node reference-game/handicap.test.cjs
 ```
 
-These verify the actual copied JavaScript in a simulated DOM/canvas, not a browser playtest. The first check also verifies bundle/media hashes and source sprite bounds. The 12 finals checks cover all five rounds, elimination, persistence, World isolation, pause/restart/quit, and one match loop after an immediate round transition. The 9 difficulty checks cover World and Finals, saved-level separation/migration, bounded motion and shots, player-stroke consistency, and reaction timing across frame rates. A seeded 30-shot contact scenario produces increasing opponent return coverage; it is not a human win-rate measurement. The 11 handicap checks cover actual scores through all five stages, loss/retry, deuce, pause/restart/quit, save isolation, failed storage, completion, and next-stage loop handling. Browser appearance, real pointer interaction, and audio remain unverified.
+These verify the actual copied JavaScript in a simulated DOM/canvas, not a browser playtest. The first check also verifies bundle/media hashes and source sprite bounds. The 12 finals checks cover all five rounds, elimination, persistence, World isolation, pause/restart/quit, and one match loop after an immediate round transition. The 9 difficulty checks cover all four levels in World, Finals, and CPU Handicap, saved-level separation/migration, bounded motion and shots, player-stroke consistency, and reaction timing across frame rates. A seeded 30-shot contact scenario produces increasing opponent return coverage; it is not a human win-rate measurement. The 11 handicap checks cover actual scores through all five stages, loss/retry, deuce, pause/restart/quit, save isolation, failed storage, completion, and next-stage loop handling. Browser appearance, real pointer interaction, and audio remain unverified.

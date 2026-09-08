@@ -2,19 +2,21 @@ const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const { boot } = require("./verify.cjs");
 const plain = value => JSON.parse(JSON.stringify(value));
-const levels = ["easy", "medium", "hard"];
+const levels = ["easy", "medium", "challenging", "hard"];
+const increasing = values => values.every((value, index) => index === 0 || values[index - 1] < value);
 function rng(seed) { return () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296); }
 function choose(h, mode, level) {
   h.context.butEventHandler("playFromStart", {});
   h.context.butEventHandler("countryChoice", { id: 0 });
   h.click(mode);
   assert.equal(h.context.gameState, "difficultySelect");
-  for (const label of ["Easy", "Medium", "Hard"]) assert.ok(h.flow.innerHTML.includes(label));
+  for (const label of ["Easy", "Medium", "Challenging", "Hard"]) assert.ok(h.flow.innerHTML.includes(label));
   h.click("difficulty", { level });
 }
 async function start(h, mode, level) {
   choose(h, mode, level);
   if (mode === "finals") h.click("play-final");
+  else if (mode === "handicap") h.click("play-handicap");
   else {
     h.context.butEventHandler("playFromMap", {});
     h.context.butEventHandler("playFromGameIntro", {});
@@ -29,15 +31,19 @@ function win(h) {
   h.context.updateScore("user");
 }
 
-test("all levels reach both modes at desktop, portrait, and landscape sizes", async () => {
+test("all levels reach all three modes at desktop, portrait, and landscape sizes", async () => {
   for (const size of [[1440, 900], [390, 844], [844, 390]]) {
-    for (const mode of ["world", "finals"]) for (const level of levels) {
+    for (const mode of ["world", "finals", "handicap"]) for (const level of levels) {
       const h = await boot(...size);
       h.context.saveDataHandler.setGameData({ cupId: 5, gameId: 3 });
       await start(h, mode, level);
       assert.equal(h.context.enemyBat.difficulty, level);
       assert.equal(h.context.enemyBat.skillLevel, h.context.MatchDifficulty.profiles[level].skill);
       if (mode === "finals") assert.equal(h.context.TableTennisModes.finals.difficulty, level);
+      else if (mode === "handicap") {
+        assert.equal(h.context.TableTennisModes.handicap.difficulty, level);
+        assert.equal(h.context.oGameData.enemyScore, 6);
+      }
       else assert.equal(h.context.oGameData.cupId, 5, "World progression is independent of the opponent level");
       h.context.initPause();
       h.context.butEventHandler("restartFromPause", {});
@@ -56,7 +62,7 @@ test("Finals draws persist separately at each difficulty and survive reload", as
     draws[level] = plain(h.context.TableTennisModes.finals);
     assert.equal(draws[level].round, 1);
   }
-  assert.equal(new Set(Object.values(draws).map(draw => draw.id)).size, 3);
+  assert.equal(new Set(Object.values(draws).map(draw => draw.id)).size, levels.length);
   const reload = await boot(390, 844, false, memory);
   assert.equal(reload.context.MatchDifficulty.selected, "hard");
   for (const level of levels) {
@@ -123,7 +129,7 @@ test("reaction uses game time, pauses correctly, and stays ordered at 30/60/144 
       opponent.resetToCentre();
       assert.equal(opponent.pendingReaction, null, "A new serve clears the previous decision");
     }
-    assert.ok(elapsed[0] > elapsed[1] && elapsed[1] > elapsed[2]);
+    assert.ok(increasing(elapsed.slice().reverse()), `Reaction times must decrease: ${elapsed}`);
   }
 });
 
@@ -154,9 +160,8 @@ test("return pace, spin, and open-space placement increase while player controls
     }
     totals.push(total);
   }
-  for (const key of ["pace", "spin", "open"]) assert.ok(totals[0][key] < totals[1][key] && totals[1][key] < totals[2][key], key);
-  assert.deepEqual(playerShots[0], playerShots[1]);
-  assert.deepEqual(playerShots[1], playerShots[2]);
+  for (const key of ["pace", "spin", "open"]) assert.ok(increasing(totals.map(total => total[key])), key);
+  for (const shot of playerShots.slice(1)) assert.deepEqual(shot, playerShots[0]);
 });
 
 test("opponent motion has a finite speed limit and harder levels cover ground faster", async () => {
@@ -177,16 +182,16 @@ test("opponent motion has a finite speed limit and harder levels cover ground fa
     }
     distances.push(opponent.x - startX);
   }
-  assert.ok(distances[0] < distances[1] && distances[1] < distances[2]);
+  assert.ok(increasing(distances), `Movement must increase: ${distances}`);
 });
 
 test("difficulty and separate draws work when browser storage is blocked", async () => {
   const h = await boot(390, 844, true);
-  await start(h, "finals", "hard");
+  await start(h, "finals", "challenging");
   win(h);
   const saved = plain(h.context.TableTennisModes.finals);
   choose(h, "finals", "easy");
-  choose(h, "finals", "hard");
+  choose(h, "finals", "challenging");
   assert.deepEqual(plain(h.context.TableTennisModes.finals), saved);
 });
 
@@ -221,6 +226,6 @@ test("harder opponents return more of the same incoming balls through real paddl
     totals.push(returned);
     t.diagnostic(`${level}: ${returned}/${cases} incoming shots returned`);
   }
-  assert.ok(totals[0] < totals[1] && totals[1] < totals[2], `Return coverage must rise with difficulty: ${totals}`);
-  assert.ok(totals[2] < 30, "Hard can still be beaten by wide or fast shots");
+  assert.ok(increasing(totals), `Return coverage must rise with difficulty: ${totals}`);
+  assert.ok(totals.at(-1) < 30, "Hard can still be beaten by wide or fast shots");
 });

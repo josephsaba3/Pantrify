@@ -10,7 +10,7 @@ A static local copy in `reference-game/`. Root `index.html` opens its entry page
 
 ## Game modes
 
-The main flow is Play, choose country, choose World mode, Finals system, or CPU Handicap, then choose Easy, Medium, or Hard. World mode preserves the original tour and saved progress; the selected difficulty controls the opponent independently of the tour's round.
+The main flow is Play, choose country, choose World mode, Finals system, or CPU Handicap, then choose Easy, Medium, Challenging, or Hard. World mode preserves the original tour and saved progress; the selected difficulty controls the opponent independently of the tour's round.
 
 Finals system is a 32-country single-elimination competition: round of 32, round of 16, quarterfinals, semifinals, final. The draw includes the selected country and 31 distinct opponents from the original available countries. The player plays their own matches; other matches are simulated when each round finishes. Five wins make the player champion. One loss eliminates the player and completes the remaining draw so its champion and results can be shown.
 
@@ -18,7 +18,7 @@ Finals saves each country's draw and completed matches separately for each diffi
 
 CPU Handicap is a five-stage comeback challenge. The player starts at 0 while the CPU starts at 6, then 7, 8, 9, and 10 after successive player wins. A loss stays on the same stage. The same CPU country and selected difficulty persist for the run. Five wins complete the challenge, with an action to play again. Progress and completed scores save per country and difficulty, separately from World and Finals. Restarting or leaving an unfinished match returns to its original head start. First-to-11, win-by-two scoring applies throughout, including the 0-10 stage.
 
-Easy, Medium, and Hard vary only the opponent: reaction delay, movement and recovery speed, placement accuracy under pressure, tactical returns into open space, return pace, and spin. Easy leaves more time and room for mistakes; Hard recovers and places the ball more effectively but has finite movement and shot-speed limits. A Finals draw keeps its difficulty across all rounds. World difficulty can be changed by returning through the mode selector, without resetting tour progress.
+Easy, Medium, Challenging, and Hard vary only the opponent: reaction delay, movement and recovery speed, placement accuracy under pressure, tactical returns into open space, return pace, and spin. Easy leaves more time and room for mistakes; Challenging bridges Medium and Hard with midpoint profile settings. Hard recovers and places the ball more effectively but has finite movement and shot-speed limits. A Finals draw keeps its difficulty across all rounds. World difficulty can be changed by returning through the mode selector, without resetting tour progress.
 
 Keep the copied game's player paddle movement, aiming, shot-speed cap, spin response, ball physics, and match rendering as the baseline. Matches retain first-to-11, win-by-two scoring and the source's 99-point cap.
 

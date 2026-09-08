@@ -18,7 +18,7 @@
       && (Math.abs(score[0] - score[1]) >= 2 || Math.max(...score) === 99);
   }
   function create(playerId, eligible, random = Math.random, difficulty = "medium") {
-    if (!["easy", "medium", "hard"].includes(difficulty)) throw new Error("Choose Easy, Medium, or Hard.");
+    if (!["easy", "medium", "challenging", "hard"].includes(difficulty)) throw new Error("Choose Easy, Medium, Challenging, or Hard.");
     const pool = [...new Set(eligible)].filter(Number.isInteger);
     if (pool.length < 32 || !pool.includes(playerId)) throw new Error("Finals need 32 available countries, including the player.");
     const entrants = shuffle([playerId, ...shuffle(pool.filter(id => id !== playerId), random).slice(0, 31)], random);
@@ -83,7 +83,7 @@
       if (!data || data.version !== 1 || typeof data.id !== "string" || !/^[a-z0-9-]{1,80}$/.test(data.id)) return null;
       // Saves made before difficulty selection used the opening-match opponent.
       if (data.difficulty === undefined) data.difficulty = "easy";
-      if (!["easy", "medium", "hard"].includes(data.difficulty)) return null;
+      if (!["easy", "medium", "challenging", "hard"].includes(data.difficulty)) return null;
       if (!Array.isArray(data.entrants) || data.entrants.length !== 32 || new Set(data.entrants).size !== 32) return null;
       if (!data.entrants.every(id => Number.isInteger(id) && eligible.includes(id)) || !data.entrants.includes(data.playerId)) return null;
       if (!Number.isInteger(data.round) || data.round < 0 || data.round > 4 || !["active", "champion", "eliminated"].includes(data.status)) return null;

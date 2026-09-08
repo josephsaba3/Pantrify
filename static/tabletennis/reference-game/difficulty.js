@@ -8,6 +8,9 @@
     medium: Object.freeze({ label: "Medium", description: "Quicker rallies, varied spin, and more accurate placement.",
       skill: 0.52, reaction: 0.14, reactionVariation: 0.08, travel: 1, tracking: 1.1, movement: 520, recovery: 1,
       spread: 0.66, accuracyError: 0.16, pressureError: 0.22, placement: 0.48, paceCap: 0.49, spin: 0.52, spinChance: 0.52 }),
+    challenging: Object.freeze({ label: "Challenging", description: "Sharper reactions and stronger spin, with room to recover.",
+      skill: 0.71, reaction: 0.10, reactionVariation: 0.07, travel: 1.16, tracking: 1.275, movement: 620, recovery: 1.125,
+      spread: 0.74, accuracyError: 0.125, pressureError: 0.185, placement: 0.65, paceCap: 0.525, spin: 0.68, spinChance: 0.66 }),
     hard: Object.freeze({ label: "Hard", description: "Fast reactions, stronger spin, and returns into open space.",
       skill: 0.90, reaction: 0.06, reactionVariation: 0.06, travel: 1.32, tracking: 1.45, movement: 720, recovery: 1.25,
       spread: 0.82, accuracyError: 0.09, pressureError: 0.15, placement: 0.82, paceCap: 0.56, spin: 0.84, spinChance: 0.80 })

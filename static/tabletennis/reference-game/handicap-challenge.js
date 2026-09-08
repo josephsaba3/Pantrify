@@ -10,7 +10,7 @@
   }
   function create(playerId, eligible, difficulty, random = Math.random) {
     const opponents = [...new Set(eligible)].filter(id => Number.isInteger(id) && id !== playerId);
-    if (!Number.isInteger(playerId) || !eligible.includes(playerId) || !opponents.length || !["easy", "medium", "hard"].includes(difficulty)) throw new Error("Choose a country and difficulty.");
+    if (!Number.isInteger(playerId) || !eligible.includes(playerId) || !opponents.length || !["easy", "medium", "challenging", "hard"].includes(difficulty)) throw new Error("Choose a country and difficulty.");
     return { version: 1, id: `${Date.now().toString(36)}-${Math.floor(random() * 0x100000000).toString(36)}`,
       playerId, opponentId: opponents[Math.floor(random() * opponents.length)], difficulty,
       stage: 0, status: "active", wins: [], attempts: 0, lastResult: null };
@@ -40,7 +40,7 @@
       const state = typeof serialized === "string" ? JSON.parse(serialized) : clone(serialized);
       if (!state || state.version !== 1 || typeof state.id !== "string" || !/^[a-z0-9-]{1,80}$/.test(state.id)) return null;
       if (![state.playerId, state.opponentId].every(id => Number.isInteger(id) && eligible.includes(id)) || state.playerId === state.opponentId) return null;
-      if (!["easy", "medium", "hard"].includes(state.difficulty) || !["active", "complete"].includes(state.status)) return null;
+      if (!["easy", "medium", "challenging", "hard"].includes(state.difficulty) || !["active", "complete"].includes(state.status)) return null;
       if (!Number.isInteger(state.stage) || state.stage < 0 || state.stage > 4 || (state.status === "complete" && state.stage !== 4)) return null;
       if (!Array.isArray(state.wins) || state.wins.length !== (state.status === "complete" ? 5 : state.stage)) return null;
       if (!state.wins.every((win, stage) => win && win.stage === stage && validScore(win.playerScore, win.cpuScore, stage) && win.playerScore > win.cpuScore)) return null;
