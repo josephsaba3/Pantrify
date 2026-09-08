@@ -2,6 +2,7 @@
 (() => {
   "use strict";
   const tournament = window.FinalsTournament;
+  const difficulty = window.MatchDifficulty;
   const original = { button: window.butEventHandler, start: window.initStartScreen, complete: window.initGameComplete, frame: window.requestAnimFrame };
   const screenFrames = new Set();
   window.requestAnimFrame = function(callback) {
@@ -18,7 +19,7 @@
   const names = { GB: "United Kingdom", KR: "South Korea", HK: "Hong Kong", TW: "Taiwan" };
   const escape = value => String(value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
   let mode = null, state = null, activeMatch = null, lastResult = null;
-  const storageKey = id => `finals32:v1:${id}`;
+  const storageKey = (id, level = difficulty.selected) => `finals32:v1:${id}:${level}`;
   const eligible = () => [...countryFlags.aIds];
   function countryName(id) {
     const code = countryFlags.aAllCountryCodes[id];
@@ -64,11 +65,15 @@
     window.famobi.paused = false;
     userInput.pauseIsOn = false;
   }
-  function savedFinals() {
-    const saved = tournament.restore(window.famobi.localStorage.getItem(storageKey(oGameData.userId)), eligible());
-    return saved?.playerId === oGameData.userId ? saved : null;
+  function savedFinals(level = difficulty.selected) {
+    let raw = window.famobi.localStorage.getItem(storageKey(oGameData.userId, level));
+    // Preserve the old draw as Easy; leave its original storage entry intact.
+    if (raw === null && level === "easy") raw = window.famobi.localStorage.getItem(`finals32:v1:${oGameData.userId}`);
+    const saved = tournament.restore(raw, eligible());
+    return saved?.playerId === oGameData.userId && saved.difficulty === level ? saved : null;
   }
-  function persist() { window.famobi.localStorage.setItem(storageKey(state.playerId), JSON.stringify(state)); }
+  function persist() { window.famobi.localStorage.setItem(storageKey(state.playerId, state.difficulty), JSON.stringify(state)); }
+  function newDraw() { return tournament.create(oGameData.userId, eligible(), Math.random, difficulty.selected); }
   function chooseCountry() {
     activeMatch = null;
     mode = null;
@@ -82,12 +87,12 @@
     mode = null;
     restoreWorld();
     state = savedFinals();
-    const description = state?.status === "active" ? `Continue your ${tournament.ROUND_NAMES[state.round].toLowerCase()}.` : "32 countries. Five rounds. One champion.";
+    const description = "32 countries. Five rounds. One champion.";
     show(`<div class="mode-page">
       <header class="mode-header"><h1>Choose game mode</h1><div class="chosen-country">${flag(oGameData.userId)}<strong>${escape(countryName(oGameData.userId))}</strong><button class="quiet-button" data-action="country">Change country</button></div></header>
       <div class="mode-options">
-        <button class="mode-option" data-action="world">${art("map")}<span class="mode-description"><strong>World mode</strong><span>Travel the world and work your way through the tour.</span><span class="option-action">Play world mode</span></span></button>
-        <button class="mode-option" data-action="finals">${art("cup0")}<span class="mode-description"><strong>Finals system</strong><span>${description}</span><span class="option-action">${state?.status === "active" ? "Continue finals" : "Enter finals"}</span></span></button>
+        <button class="mode-option" data-action="world">${art("map")}<span class="mode-description"><strong>World mode</strong><span>Travel the world and work your way through the tour.</span><span class="option-action">Choose difficulty</span></span></button>
+        <button class="mode-option" data-action="finals">${art("cup0")}<span class="mode-description"><strong>Finals system</strong><span>${description}</span><span class="option-action">Choose difficulty</span></span></button>
       </div>
       <button class="quiet-button mode-back" data-action="home">Back to title</button>
     </div>`, "modeSelect");
@@ -96,13 +101,29 @@
     if (!["world", "finals"].includes(next) || !eligible().includes(oGameData.userId)) return;
     mode = next;
     lastResult = null;
-    if (next === "world") {
+    showDifficulty();
+  }
+  function showDifficulty() {
+    const choices = Object.entries(difficulty.profiles).map(([level, profile]) => {
+      const saved = mode === "finals" ? savedFinals(level) : null;
+      const action = saved?.status === "active" ? `Continue ${tournament.ROUND_NAMES[saved.round].toLowerCase()}`
+        : saved ? "View results" : mode === "finals" ? "Start finals" : "Play world mode";
+      return `<button class="difficulty-option" data-action="difficulty" data-level="${level}"><span class="difficulty-copy"><strong>${profile.label}</strong><span>${profile.description}</span></span><span class="difficulty-action">${action}</span></button>`;
+    }).join("");
+    show(`<div class="difficulty-page"><header class="mode-header"><h1>Choose difficulty</h1><div class="chosen-country">${flag(oGameData.userId)}<strong>${escape(countryName(oGameData.userId))}</strong><span>${mode === "world" ? "World mode" : "Finals system"}</span></div></header>
+      <div class="difficulty-options">${choices}</div>
+      ${mode === "finals" ? '<p class="difficulty-note">Each difficulty keeps its own finals progress.</p>' : ""}
+      <button class="quiet-button mode-back" data-action="modes">Back to game modes</button></div>`, "difficultySelect");
+  }
+  function chooseDifficulty(level) {
+    if (gameState !== "difficultySelect" || !["world", "finals"].includes(mode) || !difficulty.select(level)) return;
+    if (mode === "world") {
       restoreWorld();
       stopScreen();
       hide();
       initMapScreen();
     } else {
-      state = savedFinals() ?? tournament.create(oGameData.userId, eligible());
+      state = savedFinals() ?? newDraw();
       persist();
       showBracket();
     }
@@ -125,6 +146,7 @@
       return `<li class="match-cell" style="grid-row: ${index * (2 ** (round + 1)) + 1} / span ${2 ** (round + 1)}"><div class="bracket-match${current ? " current-match" : ""}"${current ? ' aria-label="Your next match"' : ""}>${teamLine(match.home, match.score?.[0], match.winner, state.playerId, `Winner of match ${index * 2 + 1}`)}${teamLine(match.away, match.score?.[1], match.winner, state.playerId, `Winner of match ${index * 2 + 2}`)}</div></li>`;
     }).join("")}</ol></section>`).join("");
     show(`<div class="finals-page"><header class="finals-header"><div><h1>${escape(title)}</h1><p>${escape(summary)}</p>${result}</div><button class="quiet-button" data-action="modes">Choose mode</button></header>
+      <p class="finals-difficulty">${difficulty.profiles[state.difficulty].label} difficulty</p>
       <section class="match-brief" aria-label="${next ? "Your next match" : "Tournament result"}">${matchup}${action}</section>
       <nav class="round-navigation" aria-label="Bracket rounds">${tournament.ROUND_NAMES.map((name, index) => `<button data-action="round" data-round="${index}"${index === state.round ? ' aria-current="step"' : ""}>${name}</button>`).join("")}</nav>
       <div class="bracket-scroll" tabindex="0" aria-label="Full 32-country bracket; scroll to see all rounds"><div class="bracket-board">${columns}</div></div>
@@ -146,8 +168,8 @@
     stopScreen();
     hide();
     gameState = "finalsLaunching";
-    // Use the reference's opening-match settings for now. Difficulty selection
-    // is intentionally a later feature, not tied to a fake world-tour round.
+    difficulty.select(state.difficulty);
+    // Finals opponents use the draw's level, independently of world-tour IDs.
     Object.assign(oGameData, { userId: state.playerId, enemyId: match.opponentId, cupId: 0, gameId: 0, userScore: 0, enemyScore: 0 });
     initGame();
   }
@@ -196,19 +218,20 @@
     if (!button || !flow.contains(button)) return;
     const action = button.dataset.action;
     if (action === "world" || action === "finals") chooseMode(action);
+    else if (action === "difficulty") chooseDifficulty(button.dataset.level);
     else if (action === "country") chooseCountry();
     else if (action === "modes") showModes();
     else if (action === "home") initStartScreen();
     else if (action === "play-final") playFinal();
     else if (action === "new-finals" && state?.status !== "active") {
-      state = tournament.create(oGameData.userId, eligible()); lastResult = null; persist(); showBracket();
+      difficulty.select(state.difficulty); state = newDraw(); lastResult = null; persist(); showBracket();
     } else if (action === "round") {
       const column = flow.querySelector(`.bracket-column[data-round="${Number(button.dataset.round)}"]`);
       column?.scrollIntoView({ block: "nearest", inline: "start", behavior: "auto" });
     }
   });
   window.TableTennisModes = {
-    chooseCountry, chooseMode, showModes, showBracket, playFinal,
+    chooseCountry, chooseMode, chooseDifficulty, showModes, showBracket, playFinal,
     get mode() { return mode; }, get finals() { return state ? JSON.parse(JSON.stringify(state)) : null; }
   };
 })();

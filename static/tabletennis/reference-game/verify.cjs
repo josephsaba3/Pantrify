@@ -100,6 +100,7 @@ async function boot(width, height, blockedStorage = false, memory = new Map()) {
     pause() {}
   }
   const sandbox = {
+    Math: Object.create(Math),
     console, document, navigator: { userAgent: "Chrome Desktop", appVersion: "Chrome", platform: "Win32" },
     location: { protocol: "file:", href: "file:///reference-game/index.html" },
     innerWidth: width, innerHeight: height, Image: LocalImage, Audio: SilentAudio,
@@ -119,8 +120,8 @@ async function boot(width, height, blockedStorage = false, memory = new Map()) {
   const context = vm.createContext(sandbox);
   const scripts = [...read("index.html").toString().matchAll(/<script src="([^"]+)"/g)].map(match => match[1]);
   for (const name of scripts) vm.runInContext(read(name).toString(), context, { filename: name });
-  async function tick() {
-    now += 1000 / 60;
+  async function tick(step = 1000 / 60) {
+    now += step;
     const queuedFrames = [...frames.values()];
     frames.clear();
     for (const [id, timer] of [...timers]) if (timer.due <= now) { timers.delete(id); timer.fn(); }
@@ -150,6 +151,8 @@ async function smoke(width, height, blockedStorage = false) {
   assert.match(flow.innerHTML, /Choose game mode/);
   assert.doesNotMatch(flow.innerHTML, /undefined|NaN/);
   click("world");
+  assert.equal(context.gameState, "difficultySelect");
+  click("difficulty", { level: "medium" });
   for (const button of ["playFromMap", "playFromGameIntro"]) {
     context.butEventHandler(button, {});
     await ticks();

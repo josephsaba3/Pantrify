@@ -46,6 +46,16 @@
 .mode-description > span { max-width: 30ch; }
 .option-action { display: block; padding: 11px 20px; margin-top: 8px; background: var(--gold); color: var(--ink); border-radius: 8px; font-weight: 750; }
 .mode-back { display: block; margin: 28px auto 0; }
+.difficulty-page { width: min(100%, 760px); margin: max(16px, 4vh) auto; }
+.difficulty-options { display: grid; gap: 16px; margin-top: 32px; }
+.difficulty-option { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 22px 24px; border: 2px solid var(--soft); border-radius: 12px; color: var(--ink); background: var(--paper); text-align: left; }
+.difficulty-option:hover { border-color: var(--gold); background: #fff7de; }
+.difficulty-copy { display: grid; gap: 6px; min-width: 0; }
+.difficulty-copy strong { font-size: 28px; font-weight: 800; }
+.difficulty-copy > span { max-width: 42ch; }
+.difficulty-action { flex: 0 0 160px; font-weight: 750; text-align: right; }
+.difficulty-note { text-align: center; color: var(--soft); }
+.finals-difficulty { color: var(--gold); font-weight: 750; }
 .finals-page { max-width: 1300px; margin: 0 auto; }
 .finals-header { display: flex; justify-content: space-between; align-items: start; gap: 24px; }
 .finals-header .quiet-button { flex-shrink: 0; }
@@ -83,6 +93,10 @@
 @media (max-width: 650px) {
   #mode-flow { padding: max(20px, env(safe-area-inset-top)) 16px max(20px, env(safe-area-inset-bottom)); }
   .mode-page { margin: 12px auto; }
+  .difficulty-page { margin: 12px auto; }
+  .difficulty-options { gap: 12px; margin-top: 24px; }
+  .difficulty-option { flex-direction: column; align-items: stretch; padding: 18px; gap: 12px; }
+  .difficulty-action { flex-basis: auto; text-align: left; }
   .mode-options { grid-template-columns: 1fr; margin-top: 26px; gap: 16px; }
   .mode-option { flex-direction: row; text-align: left; gap: 18px; padding: 20px; }
   .mode-art { width: 90px; height: 110px; flex-shrink: 0; }

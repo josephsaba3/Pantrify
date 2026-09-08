@@ -67,7 +67,7 @@ components:
 
 ## Overview
 
-The active game is the supplied copy in [reference-game/](reference-game/). Extend its blue denim backdrop, country flags, map and trophy artwork faithfully. The original title, country selection, tutorial, World tour, match and pause screens retain the copied canvas presentation. The added mode chooser and Finals bracket use native HTML controls with the same game imagery.
+The active game is the supplied copy in [reference-game/](reference-game/). Extend its blue denim backdrop, country flags, map and trophy artwork faithfully. The original title, country selection, tutorial, World tour, match and pause screens retain the copied canvas presentation. Country selection leads to mode selection, then Easy, Medium or Hard. The added mode and difficulty choosers and Finals bracket use native HTML controls with the same game imagery.
 
 The implementation authority is [game-modes.css](reference-game/game-modes.css) and [game-modes.js](reference-game/game-modes.js). This document captures their current styles; the tokens above describe the new HTML menus, not a replacement theme for the canvas. The source bundle and media remain unchanged. Visual and input verification in a live browser is still outstanding; the recorded checks use a simulated DOM and canvas.
 
@@ -81,11 +81,13 @@ Use the original [bgMain.jpg](reference-game/images/bgMain.jpg) over the backdro
 
 The HTML menus load the local [Archivo variable font](assets/fonts/archivo-latin-wght-normal-E0tuGl4L.woff2) as `Finals Archivo`, with Arial and sans-serif fallbacks. Headings and mode names are heavy; supporting copy uses the body setting. The mode title reduces to 23px on phones and 24px in short landscape viewports. Bracket scores use tabular numerals; round headings use 17px at weight 750.
 
-Keep explanatory copy brief: mode descriptions are limited to 30ch and the Finals summary to 65ch. The original canvas typography continues to come from the copied game.
+Keep explanatory copy brief: mode descriptions are limited to 30ch, difficulty descriptions to 42ch and the Finals summary to 65ch. Difficulty titles retain their 28px size at all widths. The original canvas typography continues to come from the copied game.
 
 ## Layout
 
 The entry fills the viewport. Country selection leads to two mode choices; their centered container is at most 980px wide with a two-column grid and a 24px gap. At 650px and below, the choices stack and each places its artwork beside its label and description. Above that width, viewports no taller than 500px use compact horizontal choices. Outer padding accounts for safe areas; the menu itself scrolls.
+
+The difficulty chooser is at most 760px wide with three stacked choice buttons. Each places its title and description on the left and its action on the right. At 650px and below, the action stacks beneath the description and aligns left.
 
 The Finals view is at most 1300px wide. Its order is heading and result, next-match action, round navigation, then the full bracket. On phones the header and match summary stack. All five rounds remain in the board: fixed 220px columns, 28px gaps and a shared 32-row grid align advancing matches. The board scrolls horizontally and vertically, keeps round headings sticky and opens at the player's current match. Round buttons scroll to columns without hiding the other rounds.
 
@@ -100,6 +102,7 @@ Use softly rounded rectangular controls and panels, with tighter corners for den
 ## Components
 
 - **Mode choices:** each complete cream panel is one native button. The World map and Finals trophy are crops of the original interface atlas. Hover changes the border to gold and the surface to warm cream. The inner action label is part of that same button.
+- **Difficulty choices:** `showDifficulty` renders the three native buttons using the difficulty page, options and option styles in the menu sources linked above. Each cream panel contains the level, descriptive copy and a play, continue or results action, with the same hover and focus treatment as mode choices. Finals shows the selected level in gold and keeps separate progress for each level; existing saves continue intact under Easy.
 - **Play and navigation buttons:** gold marks the next match or new draw action; navy marks change-country, choose-mode and back actions. Primary buttons have a 48px minimum height; quieter buttons and round navigation have a 44px minimum height. Keyboard focus uses a three-pixel gold outline with four-pixel offset.
 - **Match summary:** flags and country names identify the next opponent beside the play action. Championship and elimination states show a trophy and new-draw action. The latest actual player score appears in a status message.
 - **Bracket:** each match shows two countries, their flags and available scores. `YOU` identifies the player in text; winners receive a lighter fill and heavier weight; unresolved slots name their preceding matches. All rounds and completed results remain available after the tournament ends.
@@ -110,6 +113,6 @@ Use softly rounded rectangular controls and panels, with tighter corners for den
 - **Do** keep the original game artwork, canvas projection, paddle movement and shot behavior as the baseline.
 - **Do** use country names alongside flags, text alongside state colors and real completed player scores in the bracket.
 - **Do** preserve the complete bracket and usable scrolling at narrow widths.
-- **Don't** add difficulty controls yet; all Finals matches currently use the original opening-match settings.
+- **Do** keep difficulty changes in [difficulty.js](reference-game/difficulty.js) limited to opponent reactions, movement, return pace, spin, placement and recovery; preserve the original player paddle and ball behavior in `game.js`.
 - **Don't** treat simulated-DOM checks as evidence of live rendering, touch behavior or audio playback.
 - **Don't** apply the archived [Rally Eleven design](RALLY_ELEVEN_DESIGN.md), root `.impeccable/design.json`, older surface briefs or `.impeccable/review/` captures to this game. Those describe the earlier implementation.

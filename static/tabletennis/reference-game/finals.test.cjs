@@ -130,6 +130,7 @@ for (const [width, height] of [[1440, 900], [390, 844], [844, 390]]) {
     const h = await boot(width, height);
     await selectCountry(h, h.context.countryFlags.aIds.indexOf(0)); // Spain has ID 0.
     h.click("finals");
+  h.click("difficulty", { level: "medium" });
     assert.equal(h.context.gameState, "finalsBracket");
     assert.equal(h.context.TableTennisModes.finals.entrants.length, 32);
     assert.equal((h.flow.innerHTML.match(/class="match-cell"/g) || []).length, 31);
@@ -155,25 +156,30 @@ test("saved finals resume; countries and World progression remain separate", asy
   h.context.saveDataHandler.saveData();
   await selectCountry(h);
   h.click("finals");
+  h.click("difficulty", { level: "medium" });
   await startMatch(h);
   await scoreMatch(h);
   const saved = plain(h.context.TableTennisModes.finals);
   const reloaded = await boot(1440, 900, false, memory);
   await selectCountry(reloaded);
-  assert.match(reloaded.flow.innerHTML, /Continue finals/);
+  assert.match(reloaded.flow.innerHTML, /Choose difficulty/);
   reloaded.click("finals");
+  reloaded.click("difficulty", { level: "medium" });
   assert.deepEqual(plain(reloaded.context.TableTennisModes.finals), saved);
   reloaded.click("modes");
   reloaded.click("world");
+  reloaded.click("difficulty", { level: "medium" });
   assert.equal(reloaded.context.gameState, "map");
   assert.equal(reloaded.context.oGameData.cupId, 2);
   assert.equal(reloaded.context.oGameData.gameId, 3);
   await selectCountry(reloaded, 1);
   reloaded.click("finals");
+  reloaded.click("difficulty", { level: "medium" });
   assert.notEqual(reloaded.context.TableTennisModes.finals.playerId, saved.playerId);
   assert.equal(reloaded.context.TableTennisModes.finals.round, 0);
   await selectCountry(reloaded, 0);
   reloaded.click("finals");
+  reloaded.click("difficulty", { level: "medium" });
   assert.deepEqual(plain(reloaded.context.TableTennisModes.finals), saved);
   await startMatch(reloaded);
   await scoreMatch(reloaded, false);
@@ -187,6 +193,7 @@ test("pause resume, restart, and quit keep the same pending opponent and round",
   const h = await boot(1440, 900);
   await selectCountry(h);
   h.click("finals");
+  h.click("difficulty", { level: "medium" });
   const original = plain(h.context.TableTennisModes.finals);
   const expected = await startMatch(h);
   h.context.initPause();
@@ -212,11 +219,13 @@ test("blocked browser storage supports a playable finals session", async () => {
   const h = await boot(390, 844, true);
   await selectCountry(h);
   h.click("finals");
+  h.click("difficulty", { level: "medium" });
   await startMatch(h);
   await scoreMatch(h);
   const saved = plain(h.context.TableTennisModes.finals);
   h.click("modes");
   h.click("finals");
+  h.click("difficulty", { level: "medium" });
   assert.deepEqual(plain(h.context.TableTennisModes.finals), saved);
 });
 
@@ -224,6 +233,7 @@ test("immediately starting the next round runs one match loop", async () => {
   const h = await boot(1440, 900);
   await selectCountry(h);
   h.click("finals");
+  h.click("difficulty", { level: "medium" });
   await startMatch(h);
   h.context.oGameData.userScore = 10;
   h.context.oGameData.enemyScore = 0;
@@ -246,6 +256,7 @@ test("readable but write-failing storage never replaces current progress with an
   const h = await boot(1440, 900);
   await selectCountry(h);
   h.click("finals");
+  h.click("difficulty", { level: "medium" });
   const adapter = h.context.famobi.localStorage;
   adapter.setItem("removal-check", "old");
   h.memory.set = h.memory.delete = () => { throw new Error("QuotaExceededError"); };
@@ -254,6 +265,7 @@ test("readable but write-failing storage never replaces current progress with an
   const saved = plain(h.context.TableTennisModes.finals);
   h.click("modes");
   h.click("finals");
+  h.click("difficulty", { level: "medium" });
   assert.deepEqual(plain(h.context.TableTennisModes.finals), saved);
   assert.equal(h.context.TableTennisModes.finals.round, 1);
   adapter.removeItem("removal-check");
