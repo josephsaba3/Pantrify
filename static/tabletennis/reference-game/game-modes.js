@@ -3,6 +3,8 @@
   "use strict";
   const tournament = window.FinalsTournament;
   const difficulty = window.MatchDifficulty;
+  const handicap = window.HandicapChallenge;
+  const modeNames = { world: "World mode", finals: "Finals system", handicap: "CPU Handicap" };
   const original = { button: window.butEventHandler, start: window.initStartScreen, complete: window.initGameComplete, frame: window.requestAnimFrame };
   const screenFrames = new Set();
   window.requestAnimFrame = function(callback) {
@@ -19,7 +21,19 @@
   const names = { GB: "United Kingdom", KR: "South Korea", HK: "Hong Kong", TW: "Taiwan" };
   const escape = value => String(value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
   let mode = null, state = null, activeMatch = null, lastResult = null;
+  let handicapState = null;
+  const platformProperties = window.famobi.getFeatureProperties.bind(window.famobi);
+  window.famobi.getFeatureProperties = function(name) {
+    const properties = platformProperties(name);
+    if (name === "forced_mode" && mode === "handicap" && activeMatch) {
+      // The source reads these scores before constructing its panel and ball.
+      // This also applies the same head start when restarting a paused match.
+      return { ...properties, state: { ...properties.state, user_score: 0, enemy_score: activeMatch.startingScore } };
+    }
+    return properties;
+  };
   const storageKey = (id, level = difficulty.selected) => `finals32:v1:${id}:${level}`;
+  const handicapKey = (id, level) => `handicap:v1:${id}:${level}`;
   const eligible = () => [...countryFlags.aIds];
   function countryName(id) {
     const code = countryFlags.aAllCountryCodes[id];
@@ -74,6 +88,15 @@
   }
   function persist() { window.famobi.localStorage.setItem(storageKey(state.playerId, state.difficulty), JSON.stringify(state)); }
   function newDraw() { return tournament.create(oGameData.userId, eligible(), Math.random, difficulty.selected); }
+  function savedHandicap(level = difficulty.selected) {
+    const saved = handicap.restore(window.famobi.localStorage.getItem(handicapKey(oGameData.userId, level)), eligible());
+    return saved?.playerId === oGameData.userId && saved.difficulty === level ? saved : null;
+  }
+  function persistHandicap() { window.famobi.localStorage.setItem(handicapKey(handicapState.playerId, handicapState.difficulty), JSON.stringify(handicapState)); }
+  function newHandicap() { return handicap.create(oGameData.userId, eligible(), difficulty.selected); }
+  function handicapScore(cpu, preview = false) {
+    return `<span class="handicap-score${preview ? " mode-art" : ""}"${preview ? ' aria-hidden="true"' : ` aria-label="Starting score: You 0, CPU ${cpu}"`}><span><small>YOU</small><b>0</b></span><span><small>CPU</small><b>${cpu}</b></span></span>`;
+  }
   function chooseCountry() {
     activeMatch = null;
     mode = null;
@@ -93,40 +116,82 @@
       <div class="mode-options">
         <button class="mode-option" data-action="world">${art("map")}<span class="mode-description"><strong>World mode</strong><span>Travel the world and work your way through the tour.</span><span class="option-action">Choose difficulty</span></span></button>
         <button class="mode-option" data-action="finals">${art("cup0")}<span class="mode-description"><strong>Finals system</strong><span>${description}</span><span class="option-action">Choose difficulty</span></span></button>
+        <button class="mode-option" data-action="handicap">${handicapScore(6, true)}<span class="mode-description"><strong>CPU Handicap</strong><span>Start 0–6 down. Each win gives the CPU one more starting point.</span><span class="option-action">Choose difficulty</span></span></button>
       </div>
       <button class="quiet-button mode-back" data-action="home">Back to title</button>
     </div>`, "modeSelect");
   }
   function chooseMode(next) {
-    if (!["world", "finals"].includes(next) || !eligible().includes(oGameData.userId)) return;
+    if (!Object.hasOwn(modeNames, next) || !eligible().includes(oGameData.userId)) return;
     mode = next;
     lastResult = null;
     showDifficulty();
   }
   function showDifficulty() {
     const choices = Object.entries(difficulty.profiles).map(([level, profile]) => {
-      const saved = mode === "finals" ? savedFinals(level) : null;
-      const action = saved?.status === "active" ? `Continue ${tournament.ROUND_NAMES[saved.round].toLowerCase()}`
-        : saved ? "View results" : mode === "finals" ? "Start finals" : "Play world mode";
+      const saved = mode === "finals" ? savedFinals(level) : mode === "handicap" ? savedHandicap(level) : null;
+      const action = saved?.status === "active" ? (mode === "handicap" ? `Play from 0–${handicap.START_SCORES[saved.stage]}` : `Continue ${tournament.ROUND_NAMES[saved.round].toLowerCase()}`)
+        : saved ? "View results" : mode === "finals" ? "Start finals" : mode === "handicap" ? "Start at 0–6" : "Play world mode";
       return `<button class="difficulty-option" data-action="difficulty" data-level="${level}"><span class="difficulty-copy"><strong>${profile.label}</strong><span>${profile.description}</span></span><span class="difficulty-action">${action}</span></button>`;
     }).join("");
-    show(`<div class="difficulty-page"><header class="mode-header"><h1>Choose difficulty</h1><div class="chosen-country">${flag(oGameData.userId)}<strong>${escape(countryName(oGameData.userId))}</strong><span>${mode === "world" ? "World mode" : "Finals system"}</span></div></header>
+    show(`<div class="difficulty-page"><header class="mode-header"><h1>Choose difficulty</h1><div class="chosen-country">${flag(oGameData.userId)}<strong>${escape(countryName(oGameData.userId))}</strong><span>${modeNames[mode]}</span></div></header>
       <div class="difficulty-options">${choices}</div>
-      ${mode === "finals" ? '<p class="difficulty-note">Each difficulty keeps its own finals progress.</p>' : ""}
+      ${mode !== "world" ? `<p class="difficulty-note">Each difficulty keeps its own ${mode === "finals" ? "finals" : "handicap"} progress.</p>` : ""}
       <button class="quiet-button mode-back" data-action="modes">Back to game modes</button></div>`, "difficultySelect");
   }
   function chooseDifficulty(level) {
-    if (gameState !== "difficultySelect" || !["world", "finals"].includes(mode) || !difficulty.select(level)) return;
+    if (gameState !== "difficultySelect" || !Object.hasOwn(modeNames, mode) || !difficulty.select(level)) return;
     if (mode === "world") {
       restoreWorld();
       stopScreen();
       hide();
       initMapScreen();
-    } else {
+    } else if (mode === "finals") {
       state = savedFinals() ?? newDraw();
       persist();
       showBracket();
+    } else {
+      handicapState = savedHandicap() ?? newHandicap();
+      persistHandicap();
+      showHandicap();
     }
+  }
+  function showHandicap() {
+    if (!handicapState) return;
+    const current = handicap.nextMatch(handicapState), last = handicapState.lastResult;
+    const result = last ? `<p class="last-result" role="status">${last.won ? "You won" : "You lost"} ${last.playerScore}–${last.cpuScore}.${last.won ? "" : " Retry this stage whenever you're ready."}</p>` : "";
+    const stages = handicap.START_SCORES.map((score, stage) => {
+      const win = handicapState.wins[stage], isCurrent = current?.stage === stage;
+      return `<li${isCurrent ? ' aria-current="step"' : ""}><strong>0–${score}</strong><span>${win ? `Won ${win.playerScore}–${win.cpuScore}` : isCurrent ? "Current stage" : "Next stage"}</span></li>`;
+    }).join("");
+    const label = current ? `${last && !last.won ? "Retry" : "Play"} from 0–${current.startingScore}` : "Play again";
+    show(`<div class="handicap-page"><header class="finals-header"><div><h1>${current ? "CPU Handicap" : "Handicap challenge complete!"}</h1><p>${current ? `Stage ${current.stage + 1} of 5. Win to increase the CPU's starting score.` : "Five comeback wins, from 0–6 through 0–10."}</p>${result}</div><button class="quiet-button" data-action="modes">Choose mode</button></header>
+      <p class="finals-difficulty">${difficulty.profiles[handicapState.difficulty].label} difficulty</p>
+      <div class="chosen-country">${flag(handicapState.playerId)}<strong>${escape(countryName(handicapState.playerId))}</strong><span>vs</span>${flag(handicapState.opponentId)}<strong>${escape(countryName(handicapState.opponentId))} (CPU)</strong></div>
+      <section class="match-brief" aria-label="${current ? "Starting score" : "Challenge result"}">${current ? handicapScore(current.startingScore) : art("cup0", "winner-cup")}<button class="play-button" data-action="${current ? "play-handicap" : "new-handicap"}">${label}</button></section>
+      <p>You start at 0. First to 11, win by two. A loss keeps you on the same stage.</p>
+      <h2 class="handicap-stages-title">Starting scores <span>You – CPU</span></h2><ol class="handicap-stages" aria-label="Five handicap stages">${stages}</ol>
+    </div>`, "handicapProgress");
+  }
+  function playHandicap() {
+    if (activeMatch || mode !== "handicap" || gameState !== "handicapProgress" || !handicapState) return;
+    const match = handicap.nextMatch(handicapState);
+    if (!match) return;
+    activeMatch = match;
+    stopScreen();
+    hide();
+    gameState = "handicapLaunching";
+    difficulty.select(handicapState.difficulty);
+    Object.assign(oGameData, { userId: handicapState.playerId, enemyId: handicapState.opponentId, cupId: 0, gameId: 0 });
+    initGame();
+  }
+  function finishHandicap() {
+    if (!activeMatch || !handicapState || gameState !== "game") return;
+    handicapState = handicap.record(handicapState, activeMatch.token, oGameData.userScore, oGameData.enemyScore);
+    activeMatch = null;
+    persistHandicap();
+    playSound(handicapState.lastResult.won ? "winGame" : "loseGame");
+    showHandicap();
   }
   function teamLine(id, score, winner, playerId, placeholder) {
     if (id === null) return `<div class="bracket-team pending"><span>${placeholder}</span></div>`;
@@ -186,6 +251,7 @@
   }
   window.initGameComplete = function() {
     if (mode === "finals") return finishFinal();
+    if (mode === "handicap") return finishHandicap();
     return original.complete();
   };
   window.initStartScreen = function() {
@@ -206,10 +272,10 @@
       saveDataHandler.saveData();
       return showModes();
     }
-    if (mode === "finals" && id === "quitFromPause") {
+    if ((mode === "finals" || mode === "handicap") && id === "quitFromPause") {
       activeMatch = null;
       if (window.audioType === 1 && !window.muted) { Howler.mute(false); playMusic(); }
-      return showBracket();
+      return mode === "finals" ? showBracket() : showHandicap();
     }
     return original.button(id, data);
   };
@@ -217,12 +283,16 @@
     const button = event.target.closest("button[data-action]");
     if (!button || !flow.contains(button)) return;
     const action = button.dataset.action;
-    if (action === "world" || action === "finals") chooseMode(action);
+    if (Object.hasOwn(modeNames, action)) chooseMode(action);
     else if (action === "difficulty") chooseDifficulty(button.dataset.level);
     else if (action === "country") chooseCountry();
     else if (action === "modes") showModes();
     else if (action === "home") initStartScreen();
     else if (action === "play-final") playFinal();
+    else if (action === "play-handicap") playHandicap();
+    else if (action === "new-handicap" && mode === "handicap" && gameState === "handicapProgress" && handicapState?.status === "complete") {
+      difficulty.select(handicapState.difficulty); handicapState = newHandicap(); persistHandicap(); showHandicap();
+    }
     else if (action === "new-finals" && state?.status !== "active") {
       difficulty.select(state.difficulty); state = newDraw(); lastResult = null; persist(); showBracket();
     } else if (action === "round") {
@@ -231,7 +301,8 @@
     }
   });
   window.TableTennisModes = {
-    chooseCountry, chooseMode, chooseDifficulty, showModes, showBracket, playFinal,
+    chooseCountry, chooseMode, chooseDifficulty, showModes, showBracket, playFinal, showHandicap, playHandicap,
+    get handicap() { return handicapState ? JSON.parse(JSON.stringify(handicapState)) : null; },
     get mode() { return mode; }, get finals() { return state ? JSON.parse(JSON.stringify(state)) : null; }
   };
 })();

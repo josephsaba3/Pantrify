@@ -1,6 +1,6 @@
 ---
 name: Table Tennis World Tour - local modes
-description: Original game imagery with native mode selection and a complete finals bracket.
+description: Original game imagery with native mode selection, a complete finals bracket and CPU Handicap progress.
 colors:
   ink: "#182b4c"
   paper: "#f6f8fc"
@@ -67,7 +67,7 @@ components:
 
 ## Overview
 
-The active game is the supplied copy in [reference-game/](reference-game/). Extend its blue denim backdrop, country flags, map and trophy artwork faithfully. The original title, country selection, tutorial, World tour, match and pause screens retain the copied canvas presentation. Country selection leads to mode selection, then Easy, Medium or Hard. The added mode and difficulty choosers and Finals bracket use native HTML controls with the same game imagery.
+The active game is the supplied copy in [reference-game/](reference-game/). Extend its blue denim backdrop, country flags, map and trophy artwork faithfully. The original title, country selection, tutorial, World tour, match and pause screens retain the copied canvas presentation. Country selection leads to mode selection, then Easy, Medium or Hard. The added mode and difficulty choosers, Finals bracket and CPU Handicap progress page use native HTML controls with the same game imagery.
 
 The implementation authority is [game-modes.css](reference-game/game-modes.css) and [game-modes.js](reference-game/game-modes.js). This document captures their current styles; the tokens above describe the new HTML menus, not a replacement theme for the canvas. The source bundle and media remain unchanged. Visual and input verification in a live browser is still outstanding; the recorded checks use a simulated DOM and canvas.
 
@@ -81,13 +81,17 @@ Use the original [bgMain.jpg](reference-game/images/bgMain.jpg) over the backdro
 
 The HTML menus load the local [Archivo variable font](assets/fonts/archivo-latin-wght-normal-E0tuGl4L.woff2) as `Finals Archivo`, with Arial and sans-serif fallbacks. Headings and mode names are heavy; supporting copy uses the body setting. The mode title reduces to 23px on phones and 24px in short landscape viewports. Bracket scores use tabular numerals; round headings use 17px at weight 750.
 
+Handicap starting-score digits use tabular numerals at 56px and weight 800, with a 1.1 line height. The mode-card preview reduces them to 36px on phones and in short landscape viewports. Stage starting scores use 28px tabular numerals at weight 800.
+
 Keep explanatory copy brief: mode descriptions are limited to 30ch, difficulty descriptions to 42ch and the Finals summary to 65ch. Difficulty titles retain their 28px size at all widths. The original canvas typography continues to come from the copied game.
 
 ## Layout
 
-The entry fills the viewport. Country selection leads to two mode choices; their centered container is at most 980px wide with a two-column grid and a 24px gap. At 650px and below, the choices stack and each places its artwork beside its label and description. Above that width, viewports no taller than 500px use compact horizontal choices. Outer padding accounts for safe areas; the menu itself scrolls.
+The entry fills the viewport. Country selection leads to three mode choices; their centered container is at most 1120px wide with a three-column grid and a 24px gap. From 651px to 999px, the first two choices share a row and CPU Handicap spans the next row with its score preview beside its description. At 650px and below, the choices form one column and each places its artwork beside its label and description. Above that width, viewports no taller than 500px also use one column of compact horizontal choices. Outer padding accounts for safe areas; the menu itself scrolls.
 
 The difficulty chooser is at most 760px wide with three stacked choice buttons. Each places its title and description on the left and its action on the right. At 650px and below, the action stacks beneath the description and aligns left.
+
+The CPU Handicap page is at most 900px wide. Its order is heading and latest result, difficulty, countries, starting-score panel and play action, then five stage panels. Stages occupy five columns, wrapping into three columns at 650px and below; the header and starting-score panel also stack at that width.
 
 The Finals view is at most 1300px wide. Its order is heading and result, next-match action, round navigation, then the full bracket. On phones the header and match summary stack. All five rounds remain in the board: fixed 220px columns, 28px gaps and a shared 32-row grid align advancing matches. The board scrolls horizontally and vertically, keeps round headings sticky and opens at the player's current match. Round buttons scroll to columns without hiding the other rounds.
 
@@ -101,8 +105,9 @@ Use softly rounded rectangular controls and panels, with tighter corners for den
 
 ## Components
 
-- **Mode choices:** each complete cream panel is one native button. The World map and Finals trophy are crops of the original interface atlas. Hover changes the border to gold and the surface to warm cream. The inner action label is part of that same button.
-- **Difficulty choices:** `showDifficulty` renders the three native buttons using the difficulty page, options and option styles in the menu sources linked above. Each cream panel contains the level, descriptive copy and a play, continue or results action, with the same hover and focus treatment as mode choices. Finals shows the selected level in gold and keeps separate progress for each level; existing saves continue intact under Easy.
+- **Mode choices:** each complete cream panel is one native button. The World map and Finals trophy are crops of the original interface atlas; CPU Handicap uses a native score preview showing `YOU 0` and `CPU 6` in two navy panels. Hover changes the border to gold and the surface to warm cream. The inner action label is part of that same button.
+- **Difficulty choices:** `showDifficulty` renders the three native buttons using the difficulty page, options and option styles in the menu sources linked above. Each cream panel contains the level, descriptive copy and a play, continue or results action, with the same hover and focus treatment as mode choices. Finals and CPU Handicap show the selected level in gold and keep separate progress for each level; existing Finals saves continue intact under Easy.
+- **Handicap progress:** five navy stage panels show starting scores from 0–6 through 0–10. Gold borders and text identify the current stage alongside its text label; completed stages show actual winning scores. The latest result appears in a status message. The gold action advances after a win, retries the same stage after a loss and offers play again beside the original trophy when all five stages are complete.
 - **Play and navigation buttons:** gold marks the next match or new draw action; navy marks change-country, choose-mode and back actions. Primary buttons have a 48px minimum height; quieter buttons and round navigation have a 44px minimum height. Keyboard focus uses a three-pixel gold outline with four-pixel offset.
 - **Match summary:** flags and country names identify the next opponent beside the play action. Championship and elimination states show a trophy and new-draw action. The latest actual player score appears in a status message.
 - **Bracket:** each match shows two countries, their flags and available scores. `YOU` identifies the player in text; winners receive a lighter fill and heavier weight; unresolved slots name their preceding matches. All rounds and completed results remain available after the tournament ends.
