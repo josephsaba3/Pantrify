@@ -1,59 +1,29 @@
 # Product
 
-<!-- impeccable:product-schema 1 -->
+## Current direction
 
-## Platform
+Use the user's supplied Table Tennis World Tour game as the working base, then build further changes on it. This follows the user's explicit request to copy the reference after the independently tuned version still felt different.
 
-web
+## Runtime
 
-## Stack
+A static local copy in `reference-game/`. Root `index.html` opens its entry page. The source game bundle, images, and audio are local. `local-platform.js` supplies hosting callbacks and namespaced browser storage.
 
-Plain JavaScript, HTML, CSS, and Canvas 2D. Open index.html directly or publish the files to static hosting. No Node, dependencies, build step, or application server is required.
+## Game modes
 
-## Users
+The main flow is Play, choose country, then choose World mode or Finals system. World mode preserves the original tour and saved progress.
 
-Players using a phone browser who want a quick table-tennis game with more challenge and competitive structure than a simple sequence of AI matches.
+Finals system is a 32-country single-elimination competition: round of 32, round of 16, quarterfinals, semifinals, final. The draw includes the selected country and 31 distinct opponents from the original available countries. The player plays their own matches; other matches are simulated when each round finishes. Five wins make the player champion. One loss eliminates the player and completes the remaining draw so its champion and results can be shown.
 
-## Product Purpose
+Finals saves each country's draw and completed matches separately from World progress. An uncompleted match restarts after quitting or reloading. Completed tournaments remain viewable, with an action to start a new finals draw.
 
-Create an original table-tennis game with the immediate drag-and-swipe accessibility of Table Tennis World Tour, but with selectable difficulty and a tournament that feels like an actual competition. Success means the controls are easy to understand on a phone while the harder opponents demand placement, timing, spin, and adaptation.
+Difficulty selection is a later feature. Finals currently uses the original opening-match AI settings throughout. Keep the copied game's paddle movement, aiming, speed, spin, bounce, and match rendering as the baseline. Matches retain first-to-11, win-by-two scoring and the source's 99-point cap.
 
-## Positioning
+The source is the supplied `Downloads.zip`; missing media was restored from the same public game's CDN. Origin and hashes are recorded in `reference-game/source-manifest.json`. The original bundle and assets retain their source identity.
 
-A touch-first arcade table-tennis game whose challenge comes from distinct opponent behavior and tournament pressure rather than opponents simply returning more shots.
+## Previous work
 
-## Operating Context
+The custom Rally Eleven game remains available through `rally-eleven.html`, with its earlier product brief preserved in `RALLY_ELEVEN_PRODUCT.md`. The active game is the copied reference, not that earlier implementation.
 
-The primary experience is short, landscape-oriented play in a mobile web browser. Players choose a difficulty, enter a tournament, play AI opponents through a bracket, and either advance or restart after elimination.
+## Verification limits
 
-## Capabilities and Constraints
-
-- Mobile browser play is the primary target; desktop pointer controls should also work.
-- Paddle control must use direct drag or swipe input.
-- Include multiple named difficulty levels.
-- Harder levels must be meaningfully difficult through reaction speed, anticipation, placement, spin handling, consistency, and opponent styles.
-- Version one should favor the easier scope: one polished tournament rather than a large world-tour campaign.
-- The first tournament should use a real competitive structure rather than a linear list of unrelated matches. The exact bracket size and retry rules remain open until the interaction brief is confirmed.
-- Code, artwork, audio, branding, UI, and tournament presentation must be original. The referenced Famobi game is a mechanical and structural reference, not a source or asset library.
-
-## Brand Commitments
-
-The working title and visual identity are undecided. The game should preserve the immediacy and clarity of the supplied Table Tennis World Tour reference without reproducing its protected expression.
-
-## Evidence on Hand
-
-- Reference supplied by the user: `https://play.famobi.com/wrapper/table-tennis-world-tour/A1000-10`
-- Saved reference scripts supplied in `Downloads.zip`; source-level comparison is recorded in `REFERENCE_PHYSICS.md`.
-- No original game assets, brand assets, player data, or audio have been supplied.
-
-## Product Principles
-
-1. Easy to control, difficult to master.
-2. Difficulty changes how opponents play, not only their numerical speed.
-3. Every tournament match should create visible stakes and progression.
-4. Prioritize a polished core rally over a broad but shallow campaign.
-5. Design for thumbs and small screens first.
-
-## Accessibility & Inclusion
-
-Touch targets and text must remain legible on phone screens. Gameplay must not rely on color alone, and essential motion feedback should remain understandable with reduced-motion preferences.
+Source/asset integrity, country/mode routing, World matches, finals draws and results, five-win championships, elimination, saved progress, World isolation, pause/restart/quit, and storage fallback were checked with the copied code in a simulated DOM. Live browser input, rendering, and audio remain unverified because no browser was connected.

@@ -1,49 +1,45 @@
-# Rally Eleven
+# Table Tennis
 
-A phone-first table-tennis tournament game with direct paddle control, real first-to-11 scoring, four AI difficulty levels, and an eight-player knockout draw.
+The working base is now a local copy of the supplied **Table Tennis World Tour** game.
 
-## Play locally
+Open [index.html](index.html), which goes directly to [reference-game/index.html](reference-game/index.html). Everything required for the single-language game is local: its original game bundle, graphics, and audio. No server, Node installation, or build step is needed to play.
 
-Open `index.html` in a browser. No Node installation, npm commands, build step, or local server is needed. Keep `index.html`, `src/`, and `assets/` together.
+The original paddle movement, aiming, ball physics, and match rendering are retained. A local hosting adapter supplies the callbacks and storage previously provided by the portal. New menu and tournament scripts add the finals flow without modifying the supplied bundle.
 
-To play on a phone, upload `index.html`, `src/`, and `assets/` together to static website hosting and open that website. No application backend is required. Landscape orientation gives the largest playing area; portrait is supported for menus.
+## Game flow
 
-Progress is saved in this browser when local storage is available. If storage is blocked, the game still works, but progress only lasts for the current page session. A local file and a hosted URL have separate saves.
+Press Play, choose your country, then choose **World mode** or **Finals system**.
 
-## Edit the game
+- World mode keeps the original tour and its saved progress.
+- Finals draws 32 distinct countries, including yours, into a single-elimination bracket: round of 32, round of 16, quarterfinals, semifinals, final.
+- Win five matches to become champion. Matches use the original first-to-11, win-by-two scoring (including its 99-point cap). Other countries' matches are simulated after each round.
+- Your bracket and completed results save automatically for each country. Choosing Finals again resumes that draw. A loss ends your run and completes the rest of the bracket; after a win or elimination you can start a new draw.
+- Quitting a paused finals match returns to the bracket; that uncompleted match can be replayed. Reloading also restarts an uncompleted match.
 
-Edit the JavaScript in `src/` and refresh the page. Styles are in `src/styles.css`; bundled fonts and their licenses are in `assets/`. The script order in `index.html` loads the game dependencies before the app. Each script keeps its internals private and shares its public functions through `window.RallyEleven`.
+Difficulty selection is deferred. All finals matches currently use the copied game's opening-match AI settings. Paddle and ball mechanics are unchanged.
 
-## Controls
+## Files to build on
 
-- Drag the paddle directly with a finger, or move the mouse over the court. Mouse/trackpad control uses 28% less horizontal travel for finer placement, with no follow delay or drift. Touch stays directly under the finger. Both can reach the sidelines.
-- Meet the incoming ball with the visible paddle face after it bounces on your side. The contact ring marks the impact position.
-- Hold the paddle still for a controlled block; faster incoming balls retain more pace. Forward strokes hit harder, then power levels off. Ball speed stays capped during flight and after spin bounces.
-- Move gently left or right to aim a flat return. Faster, deliberate sideways brushes add sidespin and a stronger curve and bounce while keeping forward pace close to a block. Small corrections use their own speed, even immediately after a fast stroke.
-- Brush upward for a topspin drive; a fast upward stroke on a high ball produces a smash. Brush downward for a slower backspin return that lands shorter and checks its bounce. Diagonal swipes combine both kinds of spin, with stronger forward power reducing sidespin.
-- Contact location and sideways stroke speed set a continuous aim, with only a small deflection from the paddle's rim. Brush toward the sideline to aim wider; controlled shots can catch the line, while outward swipes can go wide. A ball that grazes the top edge counts as a bounce. The shadow on the table helps you judge ball height.
-- The last-hit readout shows shot type, ball speed in km/h, and spin in rpm. These are values from the game's arcade physics.
-- Keyboard fallback: arrow keys move the paddle.
-- Use **SND** to toggle generated sound and **Pause** to suspend a match.
+- [reference-game/game.js](reference-game/game.js): copied game and library bundle; identical to the supplied source at the start of this baseline.
+- [reference-game/local-platform.js](reference-game/local-platform.js): local platform callbacks and separate saved progress.
+- [reference-game/game-modes.js](reference-game/game-modes.js): country/mode navigation and finals integration.
+- [reference-game/finals-tournament.js](reference-game/finals-tournament.js): 32-country draw, results, progression, and save validation.
+- [reference-game/game-modes.css](reference-game/game-modes.css): responsive mode chooser and full bracket.
+- [reference-game/index.html](reference-game/index.html): the local entry page.
+- `reference-game/images/` and `reference-game/audio/`: restored original media.
+- [reference-game/source-manifest.json](reference-game/source-manifest.json): source locations and hashes.
+- `reference-game/supplied/`: the untouched ZIP contents.
 
-## Tournament rules
-
-- Eight-player single-elimination bracket.
-- Quarterfinal, semifinal, and final.
-- Each match is first to 11 and must be won by two points.
-- Service changes every two points, then every point at deuce.
-- A loss ends the current tournament run.
+See [reference-game/README.md](reference-game/README.md) for restoration details.
 
 ## Checks
 
-Open `tests/index.html` in your browser. It runs scoring, difficulty, tournament, pointer-control, contact, stroke-power, and spin tests against the same JavaScript used by the game. Checks include desktop and phone geometry, equivalent swipe strength across screen sizes, coalesced and equal-timestamp input, quick reversals, curved swipes, cancellation, visible contact, shot placement, distinct drives and cuts, live rally progression, and playable returns at 30, 60, and 144 FPS. Speed and edge checks cover the full-flight speed ceiling, the forward-power/sidespin tradeoff, AI defence against hard strokes in all directions, reachable sidelines, finite-ball edge/corner grazes, wide misses, and long-shot scoring.
+Run `node reference-game/verify.cjs` if Node is available. It checks the source bundle hash, all 18 media hashes, loaded sprite bounds, country-to-mode-to-World flow, rally scoring, pause/resume, and unavailable-storage handling at desktop, portrait, and landscape sizes.
 
-If Node is available, `node tests/run.cjs` runs the same logic tests without a browser. It does not verify browser rendering or real-device input; Node is still not required to play the game.
+Run `node reference-game/finals.test.cjs` for 12 finals checks covering unique 32-country draws, five wins, elimination in every round, saved/reloaded progress, invalid saves, World isolation, pause/restart/quit, duplicate results, immediate next-round transitions, and storage write failures.
 
-Mouse checks also cover small corrections after fast movement, continuous placement through nine gentle strokes, stable paddle tilt, stopping without drift, and reaching both sidelines with the reduced travel.
+These checks run against a simulated DOM and canvas. They do not verify live browser input, rendering, or audio playback. No browser was connected during implementation. Saved progress requires browser storage; when unavailable, the game supports the current session only.
 
-For a gameplay check, start a tournament, enter a match, serve, and compare a still-paddle block with slow and fast slices through contact. Try sideways, upward, downward, and diagonal swipes, then pause/resume. Check desktop, portrait phone, and landscape phone sizes. Reload to check that the tournament can be continued.
+## Previous version
 
-The original TypeScript source and Node configuration are retained in `.archive/before-static.zip` as a migration backup; this archive is not needed to play or publish.
-
-The supplied Famobi reference code was inspected for mechanics. See [REFERENCE_PHYSICS.md](REFERENCE_PHYSICS.md) for the source locations and comparison.
+The earlier custom Rally Eleven game is preserved at [rally-eleven.html](rally-eleven.html). Its `src/`, `assets/`, and `tests/` remain available. Its documentation is preserved in [RALLY_ELEVEN.md](RALLY_ELEVEN.md), [RALLY_ELEVEN_DESIGN.md](RALLY_ELEVEN_DESIGN.md), and [RALLY_ELEVEN_PRODUCT.md](RALLY_ELEVEN_PRODUCT.md).

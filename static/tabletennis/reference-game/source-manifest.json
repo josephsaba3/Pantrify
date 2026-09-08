@@ -1,0 +1,122 @@
+{
+    "source":  "User-supplied Downloads.zip",
+    "originalBundle":  "Table Tennis World Tour_files/a_data/TweenMax.min_0op3.js",
+    "bundleSha256":  "4b218dd028e5c98afdb99e038fa49e99fe25a676302004f543ce566589378d84",
+    "downloadedAtUtc":  "2026-09-08T09:52:33.8895028Z",
+    "assets":  [
+                   {
+                       "path":  "audio/music.m4a",
+                       "url":  "https://games.cdn.famobi.com/html5games/t/table-tennis-world-tour/92a8f146/audio/music.m4a",
+                       "bytes":  735125,
+                       "sha256":  "18f43473c80fdce22032fb9e9dcb47f1954a2b53f0c9fdf88fe04704367b41df"
+                   },
+                   {
+                       "path":  "audio/music.ogg",
+                       "url":  "https://games.cdn.famobi.com/html5games/t/table-tennis-world-tour/92a8f146/audio/music.ogg",
+                       "bytes":  600691,
+                       "sha256":  "0f8d7895c6c12f9a37c4a9d33d66b2c42e47fb3379926bdfe4082e5b62efa10a"
+                   },
+                   {
+                       "path":  "audio/sound.m4a",
+                       "url":  "https://games.cdn.famobi.com/html5games/t/table-tennis-world-tour/92a8f146/audio/sound.m4a",
+                       "bytes":  547099,
+                       "sha256":  "409cce09a071373aa08f823e9336b047a656444c29bb92fe87b600b02b4034f2"
+                   },
+                   {
+                       "path":  "audio/sound.ogg",
+                       "url":  "https://games.cdn.famobi.com/html5games/t/table-tennis-world-tour/92a8f146/audio/sound.ogg",
+                       "bytes":  357659,
+                       "sha256":  "ef76812952301247ce6038d14b24d20da64b04a165411142c3e730323b5f43d4"
+                   },
+                   {
+                       "path":  "images/bgMain.jpg",
+                       "url":  "https://games.cdn.famobi.com/html5games/t/table-tennis-world-tour/92a8f146/images/bgMain.jpg",
+                       "bytes":  82617,
+                       "sha256":  "e360357c1ec9ff6780ee917b7a46be5b4a5bbaaa9bdfb6f39b29281c0de5ca36"
+                   },
+                   {
+                       "path":  "images/BrandingPlaceholderButton.png",
+                       "url":  "https://games.cdn.famobi.com/html5games/t/table-tennis-world-tour/92a8f146/images/BrandingPlaceholderButton.png",
+                       "bytes":  6016,
+                       "sha256":  "492298cd7283eaf1e7076489a820b59da9d5f1200b268be53a499d7523a9c29f"
+                   },
+                   {
+                       "path":  "images/countryFlags.jpg",
+                       "url":  "https://games.cdn.famobi.com/html5games/t/table-tennis-world-tour/92a8f146/images/countryFlags.jpg",
+                       "bytes":  542985,
+                       "sha256":  "58f3f34d59dbc0dfbd068f85f6b60740029049d9c63680b00868d871d50bb63d"
+                   },
+                   {
+                       "path":  "images/firework_175x175.png",
+                       "url":  "https://games.cdn.famobi.com/html5games/t/table-tennis-world-tour/92a8f146/images/firework_175x175.png",
+                       "bytes":  221364,
+                       "sha256":  "ff3e955f89c15da1e67dae576e6a47c8ca1840506f4a95aa78aecb6759815795"
+                   },
+                   {
+                       "path":  "images/gameElements.png",
+                       "url":  "https://games.cdn.famobi.com/html5games/t/table-tennis-world-tour/92a8f146/images/gameElements.png",
+                       "bytes":  400465,
+                       "sha256":  "e5aaa2aaec93927566213b2c4344e8c485d1e1ffc8b5718905774dc29501867d"
+                   },
+                   {
+                       "path":  "images/largeNumbers_75x132.png",
+                       "url":  "https://games.cdn.famobi.com/html5games/t/table-tennis-world-tour/92a8f146/images/largeNumbers_75x132.png",
+                       "bytes":  25286,
+                       "sha256":  "1506ec1270dcdf5394ab2ef8cf6de2b752a7e363c8751ae308f1dbf1e88b75fe"
+                   },
+                   {
+                       "path":  "images/loader.png",
+                       "url":  "https://games.cdn.famobi.com/html5games/t/table-tennis-world-tour/92a8f146/images/loader.png",
+                       "bytes":  23624,
+                       "sha256":  "82fbf6b33562aacb9d34ed7df21d2646699824ff26939a0795eb390dfe12dcfc"
+                   },
+                   {
+                       "path":  "images/loadSpinner.png",
+                       "url":  "https://games.cdn.famobi.com/html5games/t/table-tennis-world-tour/92a8f146/images/loadSpinner.png",
+                       "bytes":  1671,
+                       "sha256":  "02b10ed79234d4e54fe7422ca132dd474dc12acccc89243ca04d5d5bf99c851a"
+                   },
+                   {
+                       "path":  "images/scoreNumbers_20x37.png",
+                       "url":  "https://games.cdn.famobi.com/html5games/t/table-tennis-world-tour/92a8f146/images/scoreNumbers_20x37.png",
+                       "bytes":  3894,
+                       "sha256":  "1d525fd4407a5d5cf43bc048152a8a3b692ee71d2e24e6d71f984522a2addc0e"
+                   },
+                   {
+                       "path":  "images/shadow.png",
+                       "url":  "https://games.cdn.famobi.com/html5games/t/table-tennis-world-tour/92a8f146/images/shadow.png",
+                       "bytes":  24871,
+                       "sha256":  "a489b52bf59b858aa2e602a2e337d5a009fede1d3a249d0699e2ced445245830"
+                   },
+                   {
+                       "path":  "images/smallNumbers_23x34.png",
+                       "url":  "https://games.cdn.famobi.com/html5games/t/table-tennis-world-tour/92a8f146/images/smallNumbers_23x34.png",
+                       "bytes":  4792,
+                       "sha256":  "08b5e64bf3c98e53caa27805bfe80ddb6b7e39f8d9f6760720546c449dbd1836"
+                   },
+                   {
+                       "path":  "images/splashLogo.png",
+                       "url":  "https://games.cdn.famobi.com/html5games/t/table-tennis-world-tour/92a8f146/images/splashLogo.png",
+                       "bytes":  15399,
+                       "sha256":  "1fe1482ba8cf895581295aa3531694b4d84f3e74bcc66e04e54c6db7d535371a"
+                   },
+                   {
+                       "path":  "images/uiButs.png",
+                       "url":  "https://games.cdn.famobi.com/html5games/t/table-tennis-world-tour/92a8f146/images/uiButs.png",
+                       "bytes":  290203,
+                       "sha256":  "77dcba78a8f324300c1e8c38699c503dcb026703b45f57c076fc55b68432dfbd"
+                   },
+                   {
+                       "path":  "images/uiElements.png",
+                       "url":  "https://games.cdn.famobi.com/html5games/t/table-tennis-world-tour/92a8f146/images/uiElements.png",
+                       "bytes":  177581,
+                       "sha256":  "3d88849277239a00f9d5286e758902ed85b4cd5acaf8fe47cd1384dae16a44a9"
+                   }
+               ],
+    "missing":  [
+
+                ],
+    "unusedOptionalAssets":  [
+                                 "images/preloadImage.jpg"
+                             ]
+}

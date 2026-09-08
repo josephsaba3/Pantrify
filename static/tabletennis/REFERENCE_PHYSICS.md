@@ -1,5 +1,7 @@
 # Reference physics comparison
 
+This records the earlier comparison and tuning of Rally Eleven. The active game has since been replaced by the copied reference in `reference-game/`; see its README for the current baseline.
+
 Inspected the user's `C:\Users\josep\Downloads\Downloads.zip` on 2026-09-08 without executing its scripts.
 
 The game code is bundled after the libraries in `Table Tennis World Tour_files/a_data/TweenMax.min_0op3.js`. The saved `app_0op3.js`, Howler, and VisibilityManager files contain empty placeholders. `gameapi_0op3.js` handles the platform API and loading. The relevant bundled classes are `Elements.UserBat`, `Elements.EnemyBat`, and `Elements.Ball`.
