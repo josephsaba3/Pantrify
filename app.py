@@ -165,9 +165,10 @@ class Handler(BaseHTTPRequestHandler):
         length = int(self.headers.get("Content-Length", "0"))
         return json.loads(self.rfile.read(length) or b"{}")
 
-    def serve_file(self, relative: str) -> None:
-        path = (ROOT / relative).resolve()
-        if ROOT not in path.parents or not path.is_file():
+    def serve_file(self, relative: str, directory: str = ".") -> None:
+        root = (ROOT / directory).resolve()
+        path = (root / relative).resolve()
+        if root not in path.parents or not path.is_file():
             self.send_error(HTTPStatus.NOT_FOUND)
             return
         body = path.read_bytes()
@@ -178,11 +179,20 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_GET(self) -> None:
-        path = urlparse(self.path).path
+        request = urlparse(self.path)
+        path = request.path
         if path == "/api/state":
             self.send_json(state())
         elif path in ("/", "/index.html"):
             self.serve_file("static/index.html")
+        elif path == "/tabletennis":
+            location = "/tabletennis/" + (f"?{request.query}" if request.query else "")
+            self.send_response(HTTPStatus.PERMANENT_REDIRECT)
+            self.send_header("Location", location)
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+        elif path.startswith("/tabletennis/"):
+            self.serve_file(path.removeprefix("/tabletennis/") or "index.html", "static/tabletennis")
         elif path.startswith("/static/"):
             self.serve_file(path.lstrip("/"))
         else:
