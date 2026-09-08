@@ -87,6 +87,10 @@ canvas:focus-visible {
   touch-action: none;
 }
 
+@media (hover: hover) and (pointer: fine) {
+  .court-canvas { cursor: none; }
+}
+
 .home-screen::after {
   position: absolute;
   inset: 0;

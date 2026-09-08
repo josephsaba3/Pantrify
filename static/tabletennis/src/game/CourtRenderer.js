@@ -263,7 +263,7 @@ class CourtRenderer {
             y,
             z
         });
-        const shape = this.court.paddleShape(z, velocityX);
+        const shape = this.court.paddleShape(z, velocityX, x);
         const radius = shape.y;
         const tilt = shape.angle;
         ctx.save();

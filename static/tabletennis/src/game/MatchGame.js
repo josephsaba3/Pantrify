@@ -62,7 +62,7 @@ class MatchGame {
             <span>${options.difficulty.label} · ${options.opponent.style}</span>
             <strong data-serve-label>Open the rally</strong>
             <button class="primary-action" type="button" data-serve>Serve</button>
-            <small>Brush up for power, sideways for spin, or down for a slower return. Firm forward strokes reach the speed limit.</small>
+            <small>Move gently to aim. Brush faster sideways for spin, up for power, or down for a slower return.</small>
           </div>
         </div>
         <div class="pause-overlay" hidden>

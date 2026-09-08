@@ -186,6 +186,8 @@ class MatchEngine {
         const previousWeight = this.playerMotionAge > 0.12 ? 0 : 1 - blend;
         // Smooth strength, but follow the actual brush direction immediately.
         // Averaging signed velocities makes a reversal briefly spin the wrong way.
+        // Slowing down takes effect immediately: a one-pixel correction cannot
+        // borrow the strength of the preceding fast stroke.
         const speed = Math.min(rawSpeed, Math.hypot(this.playerStrokeVelocity.x, this.playerStrokeVelocity.y) * previousWeight
             + Math.min(MAX_STROKE_SPEED, rawSpeed) * blend);
         if (rawSpeed > 0.001) {
@@ -391,7 +393,6 @@ class MatchEngine {
         const { vx, vy } = stroke;
         const strokeSpeed = Math.hypot(vx, vy);
         const strength = Math.pow(clamp((strokeSpeed - 0.18) / 7.5, 0, 1), 0.85);
-        const directionX = strokeSpeed > 0 ? vx / strokeSpeed : 0;
         const directionY = strokeSpeed > 0 ? vy / strokeSpeed : 0;
         const drive = Math.max(0, directionY);
         const cut = Math.max(0, -directionY);
@@ -410,8 +411,9 @@ class MatchEngine {
         const spin = Math.sign(vx) * MAX_SPIN * sideBrush * (1 - drivePower * 0.85) + this.ball.spin * retainedSpin;
         const topspin = directionY * spinStrength - this.ball.topspin * retainedSpin;
         const landingZ = 2.0 + strength * (0.52 + drive * 0.2 - cut * 0.5);
-        // The aim limit is outside the table: controlled placement can catch a
-        // line, while an outward swipe from a wide contact can go out.
+        // Aim continuously from the contact location and measured lateral speed.
+        // Keep edge-contact deflection small; swept hits first touch the rim.
+        // The limit extends beyond the table, so outward placement can still miss.
         const targetX = clamp(this.ball.x * 0.8 + clamp(vx / 8, -1, 1) * 0.53
             + (stroke.offsetX ?? 0) * 0.09, -1.15, 1.15);
         this.launchReturn(targetX, landingZ, pace, spin, topspin);

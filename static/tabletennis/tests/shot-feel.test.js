@@ -97,11 +97,12 @@
         return landing(match);
       });
       assert.ok(results.every(Boolean));
-      assert.ok(results[0].x < results[1].x - 0.05 && results[2].x > results[1].x + 0.05);
+      assert.ok(results[0].x < results[1].x - 0.035 && results[2].x > results[1].x + 0.035);
+      assert.ok(results[2].x - results[0].x < 0.15, "Paddle-edge contact must make a small correction, not choose the entire direction");
     });
 
     it("curves stronger slices more while keeping their first bounce on the table", () => {
-      const weak = shot(2);
+      const weak = shot(3.5);
       const strong = shot(8);
       const bends = [weak, strong].map(current => {
         const { x, vx } = current.match.ball;

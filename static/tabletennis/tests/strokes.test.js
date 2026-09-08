@@ -53,7 +53,8 @@
       const fast = hit(8).event;
       assert.equal(block.shot, "Block");
       assert.equal(block.spin, 0);
-      for (const [lower, higher] of [[block, slow], [slow, medium], [medium, fast]]) {
+      assert.equal(slow.spin, 0, "Gentle placement must not automatically curve");
+      for (const [lower, higher] of [[slow, medium], [medium, fast]]) {
         assert.ok(higher.spin > lower.spin, "Faster slices must impart more spin");
         assert.ok(Math.abs(higher.power - lower.power) < 0.01, "Lateral movement must not add forward power");
       }
@@ -160,7 +161,7 @@
 
     it("keeps representative blocks and slices playable at 30, 60, and 144 FPS", () => {
       for (const rate of [30, 60, 144]) {
-        for (const [vx, vy, contactX, contactY] of [[0, 0, 0, 0.36], [8, 0, 0, 0.36], [-8, 0, 0, 0.36], [0, 6, 0, 0.36], [0, -6, 0, 0.36], [4, -4, 0, 0.36], [6, 0, 0.5, 0.15], [-6, 0, -0.5, 0.15], [0, -6, 0, 0.08], [0, 6, 0, 0.55]]) {
+        for (const [vx, vy, contactX, contactY] of [[0, 0, 0, 0.36], [8, 0, 0, 0.36], [-8, 0, 0, 0.36], [0, 6, 0, 0.36], [0, -6, 0, 0.36], [4, -4, 0, 0.36], [4, 0, 0.5, 0.15], [-4, 0, -0.5, 0.15], [0, -6, 0, 0.08], [0, 6, 0, 0.55]]) {
           const { match } = hit(vx, vy, { contactX, contactY });
           let landed = false;
           for (let time = 0; time < 1 && match.ball.active; time += 1 / rate) {

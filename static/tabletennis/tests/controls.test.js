@@ -23,13 +23,13 @@
   function hits(match, dt) {
     return match.update(dt).filter(event => event.type === "paddle" && event.side === "player");
   }
-  function controller() {
-    const match = engine();
+  function controller(width = 1440, height = 900) {
+    const match = engine(width, height);
     const listeners = {};
     const canvas = {
       width: 0, height: 0,
       getContext: () => ({ setTransform() {} }),
-      getBoundingClientRect: () => ({ left: 40, top: 20, width: 1440, height: 900 }),
+      getBoundingClientRect: () => ({ left: 40, top: 20, width, height }),
       addEventListener: (type, handler) => { listeners[type] = handler; },
       setPointerCapture: id => { canvas.capture = id; },
       hasPointerCapture: id => canvas.capture === id
@@ -211,9 +211,9 @@
           getBoundingClientRect: () => ({ left: 0, top: 0, width, height })
         }, match.court);
         renderer.resize();
-        renderer.drawPaddle(0, 0.36, PLAYER_PLANE, "#ff5a36", true, 8);
+        renderer.drawPaddle(0.4, 0.36, PLAYER_PLANE, "#ff5a36", true, 8);
         const face = calls.filter(call => call.name === "ellipse")[1];
-        const shape = match.court.paddleShape(PLAYER_PLANE, 8);
+        const shape = match.court.paddleShape(PLAYER_PLANE, 8, 0.4);
         close(face.args[2], shape.x, "Drawn face width");
         close(face.args[3], shape.y, "Drawn face height");
         close(calls.find(call => call.name === "rotate").args[0], shape.angle, "Drawn tilt");
@@ -269,7 +269,7 @@
       send("pointermove", 600, 300, 100, { pointerType: "mouse" });
       send("pointermove", 1000, 400, 110, { pointerType: "mouse" });
       const drawn = match.court.project({ ...match.playerPaddle, z: PLAYER_PLANE });
-      close(drawn.x, 1000, "Hover X");
+      close(drawn.x, 921.6, "Mouse hover uses reduced lateral travel");
       close(drawn.y, 400, "Hover Y");
       for (let i = 0; i < 200; i++) send("keydown", 0, 0, 120 + i, { key: "ArrowUp", preventDefault() {} });
       close(match.court.project({ ...match.playerPaddle, z: PLAYER_PLANE }).y, match.court.paddleBounds().top, "Keyboard upper bound");
@@ -288,6 +288,81 @@
       match.setPlayerPaddle(0, 0.3, 0.02);
       match.serve();
       assert.equal(match.playerStrokeSegments.length, 0);
+    });
+
+    it("gives mouse corrections less travel while touch remains direct, without follow drift", () => {
+      for (const size of sizes) for (const pointerType of ["mouse", "touch"]) {
+        const { match, send } = controller(...size);
+        const [width, height] = size;
+        send("pointerdown", width / 2, height * 0.6, 100, { pointerType });
+        let previous = match.court.project({ ...match.playerPaddle, z: PLAYER_PLANE }).x;
+        for (let step = 1; step <= 8; step++) {
+          send("pointermove", width / 2 + step * 5, height * 0.6, 100 + step * 16, { pointerType });
+          const next = match.court.project({ ...match.playerPaddle, z: PLAYER_PLANE }).x;
+          const distance = next - previous;
+          if (pointerType === "mouse") assert.ok(distance > 3 && distance < 4, "Fine mouse movement should be slower and continuous");
+          else close(distance, 5, "Touch must remain directly under the finger");
+          previous = next;
+          match.update(0.016);
+        }
+        for (let step = 0; step < 30; step++) match.update(1 / 120);
+        close(match.court.project({ ...match.playerPaddle, z: PLAYER_PLANE }).x, previous, "Stopping the pointer must stop the paddle");
+      }
+    });
+
+    it("does not turn a one-pixel mouse correction into the previous fast stroke", () => {
+      const { match, send } = controller();
+      send("pointermove", 400, 600, 100, { pointerType: "mouse" });
+      send("pointermove", 1000, 600, 120, { pointerType: "mouse" });
+      assert.ok(match.playerPaddle.vx > 5);
+      send("pointermove", 999, 600, 136, { pointerType: "mouse" });
+      assert.ok(match.playerPaddle.vx < 0 && match.playerPaddle.vx > -0.1, "Correction must use its own small speed and direction");
+      Object.assign(match.ball, { x: 0, y: 0.5, z: 0.7, vx: 0, vy: 0, vz: -4, spin: 0, topspin: 0 });
+      match.playerReturn();
+      assert.equal(match.ball.spin, 0, "A tiny correction must not create a full slice");
+    });
+
+    it("lets nine gentle mouse strokes land at nine distinct, steadily spaced positions", () => {
+      const landings = [];
+      for (let direction = -4; direction <= 4; direction++) {
+        const { match, send } = controller();
+        incoming(match, 0.7, 0, 0.5);
+        const ball = match.court.project(match.ball);
+        send("pointermove", ball.x - direction * 9, ball.y, 100, { pointerType: "mouse" });
+        send("pointermove", ball.x, ball.y, 150, { pointerType: "mouse" });
+        const contact = match.update(0.05).find(e => e.type === "paddle" && e.side === "player");
+        assert.ok(contact, "The actual mouse event path must hit");
+        assert.equal(contact.spin, 0, "Placement strokes should stay flat");
+        let bounce;
+        for (let frame = 0; frame < 360 && match.ball.active && !bounce; frame++) {
+          bounce = match.update(1 / 240).find(e => e.type === "table" && e.side === "opponent");
+        }
+        assert.ok(bounce);
+        landings.push(bounce.position.x);
+      }
+      for (let i = 1; i < landings.length; i++) {
+        const spacing = landings[i] - landings[i - 1];
+        assert.ok(spacing > 0.01 && spacing < 0.04, `Small aim changes should remain small and monotonic: ${spacing}`);
+      }
+    });
+
+    it("keeps both sidelines reachable with reduced mouse travel", () => {
+      for (const size of sizes) for (const sign of [-1, 1]) {
+        const { match, send } = controller(...size);
+        incoming(match, 0.12, sign * 0.8825, 0.22);
+        const ball = match.court.project(match.ball);
+        send("pointermove", sign < 0 ? 0 : size[0], ball.y, 100, { pointerType: "mouse" });
+        assert.equal(hits(match, 1 / 240).length, 1, `Outside sideline must still be reachable at ${size}`);
+      }
+    });
+
+    it("holds paddle facing steady during a small direction reversal", () => {
+      for (const x of [-0.5, 0.5]) {
+        const left = new CourtGeometry().paddleShape(PLAYER_PLANE, -6, x);
+        const right = new CourtGeometry().paddleShape(PLAYER_PLANE, 6, x);
+        assert.ok(Math.sign(left.angle) === Math.sign(x) && Math.sign(right.angle) === Math.sign(x));
+        assert.ok(Math.abs(left.angle - right.angle) < 0.05, "Changing brush direction must not abruptly flip the face");
+      }
     });
   });
 })();
