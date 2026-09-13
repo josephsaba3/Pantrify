@@ -4,8 +4,9 @@
   const tournament = window.FinalsTournament;
   const difficulty = window.MatchDifficulty;
   const handicap = window.HandicapChallenge;
+  const stats = window.MatchStats;
   const modeNames = { world: "World mode", finals: "Finals system", handicap: "CPU Handicap" };
-  const original = { button: window.butEventHandler, start: window.initStartScreen, complete: window.initGameComplete, frame: window.requestAnimFrame };
+  const original = { button: window.butEventHandler, complete: window.initGameComplete, frame: window.requestAnimFrame };
   const screenFrames = new Set();
   window.requestAnimFrame = function(callback) {
     // The source can finish a match inside Ball.update, then queue one more
@@ -22,6 +23,7 @@
   const escape = value => String(value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
   let mode = null, state = null, activeMatch = null, lastResult = null;
   let handicapState = null;
+  let matchResult = null;
   const platformProperties = window.famobi.getFeatureProperties.bind(window.famobi);
   window.famobi.getFeatureProperties = function(name) {
     const properties = platformProperties(name);
@@ -64,6 +66,7 @@
     userInput.aHitAreas.length = 0;
   }
   function show(html, screen) {
+    stats.clearBanner();
     stopScreen();
     gameState = screen;
     window.famobi.paused = true;
@@ -98,6 +101,7 @@
     return `<span class="handicap-score${preview ? " mode-art" : ""}"${preview ? ' aria-hidden="true"' : ` aria-label="Starting score: You 0, CPU ${cpu}"`}><span><small>YOU</small><b>0</b></span><span><small>CPU</small><b>${cpu}</b></span></span>`;
   }
   function chooseCountry() {
+    stats.abandon();
     activeMatch = null;
     mode = null;
     restoreWorld();
@@ -106,6 +110,7 @@
     initChooseCountry();
   }
   function showModes() {
+    stats.abandon();
     activeMatch = null;
     mode = null;
     restoreWorld();
@@ -120,6 +125,57 @@
       </div>
       <button class="quiet-button mode-back" data-action="home">Back to title</button>
     </div>`, "modeSelect");
+  }
+  function showTitle() {
+    stats.abandon();
+    activeMatch = null;
+    mode = null;
+    restoreWorld();
+    background = new Elements.Background;
+    show(`<div class="title-page"><h1 class="stats-sr-only">Table Tennis World Tour</h1>
+      ${art("titleLogo", "title-logo")}${art("titleBats", "title-bats")}
+      <nav class="title-actions" aria-label="Main menu"><button class="play-button" data-action="play">Play</button><button class="quiet-button" data-action="stats">Stats</button></nav>
+    </div>`, "title");
+    window.famobi.gameReady();
+  }
+  const statRows = [["pointsWon", "Points won"], ["servePointsWon", "Points won on serve"], ["returnPointsWon", "Points won on return"], ["unforcedErrors", "Unforced errors"], ["matchPointsSaved", "Match points saved"]];
+  const number = value => value.toLocaleString("en");
+  function statsTable(data, opponentLabel) {
+    return `<table class="stats-table"><caption class="stats-sr-only">${opponentLabel === "Opponents" ? "All-time" : "Match"} statistics comparison</caption><thead><tr><th scope="col">Statistic</th><th scope="col">You</th><th scope="col">${opponentLabel}</th></tr></thead><tbody>${statRows.map(([key, label]) => `<tr><th scope="row">${label}</th><td>${number(data.player[key])}</td><td>${number(data.opponent[key])}</td></tr>`).join("")}</tbody></table>`;
+  }
+  function statsNote() {
+    return '<p class="stats-note">Unforced errors count shots hit into the net or out. A missed return is not an unforced error.</p>';
+  }
+  function showStats() {
+    const totals = stats.totals;
+    show(`<div class="stats-page"><header class="finals-header"><div><h1>Your stats</h1><p>All completed matches, across every mode, country and difficulty.</p></div><button class="quiet-button" data-action="home">Back to title</button></header>
+      ${totals.matches ? "" : '<p class="stats-empty">No completed matches yet. Finish a match to start your record.</p>'}
+      <dl class="stats-record"><div><dt>Matches played</dt><dd>${number(totals.matches)}</dd></div><div><dt>Won</dt><dd>${number(totals.wins)}</dd></div><div><dt>Lost</dt><dd>${number(totals.losses)}</dd></div><div><dt>Win rate</dt><dd>${totals.matches ? `${Math.round(100 * totals.wins / totals.matches)}%` : "\u2014"}</dd></div></dl>
+      ${statsTable(totals, "Opponents")}<p class="stats-rally">Longest rally: <strong>${number(totals.longestRally)} returns</strong></p>${statsNote()}
+      <p class="stats-note">Stats start with this update and save in this browser. Restarted or unfinished matches and CPU head starts are excluded.</p>
+      <button class="play-button stats-play" data-action="play">Play</button>
+    </div>`, "playerStats");
+  }
+  function showMatchStats() {
+    const result = matchResult;
+    if (!result) return;
+    const next = result.mode === "finals" ? "Continue to finals" : result.mode === "handicap" ? "Continue challenge" : result.won ? "Continue world tour" : "Play again";
+    show(`<div class="stats-page"><header class="mode-header"><h1>${result.won ? "You won!" : "Match complete"}</h1><p>${modeNames[result.mode]} \u00b7 ${difficulty.profiles[result.difficulty].label}</p></header>
+      <div class="result-score" aria-label="Final score: You ${result.score[0]}, opponent ${result.score[1]}"><div>${flag(result.playerId)}<span>You \u00b7 ${escape(countryName(result.playerId))}</span><strong>${result.score[0]}</strong></div><span class="result-versus" aria-hidden="true">\u2013</span><div>${flag(result.opponentId)}<span>${escape(countryName(result.opponentId))} (CPU)</span><strong>${result.score[1]}</strong></div></div>
+      <h2 class="stats-heading">Match stats</h2>${statsTable(result, "Opponent")}
+      <p class="stats-rally">Longest rally: <strong>${number(result.longestRally)} returns</strong></p>${statsNote()}
+      ${result.startingScore[1] ? `<p class="stats-note">The CPU started with ${result.startingScore[1]} points. Points won counts only points played.</p>` : ""}
+      <nav class="stats-actions" aria-label="After match"><button class="play-button" data-action="continue-result">${next}</button><button class="quiet-button" data-action="home">Back to title</button></nav>
+    </div>`, "matchStats");
+  }
+  function continueResult() {
+    if (gameState !== "matchStats" || !matchResult) return;
+    if (matchResult.mode === "finals") return showBracket();
+    if (matchResult.mode === "handicap") return showHandicap();
+    stopScreen();
+    hide();
+    // Preserve the source's next-opponent, cup-map and loss/retry routing.
+    return original.button("nextFromGameComplete", {});
   }
   function chooseMode(next) {
     if (!Object.hasOwn(modeNames, next) || !eligible().includes(oGameData.userId)) return;
@@ -191,7 +247,7 @@
     activeMatch = null;
     persistHandicap();
     playSound(handicapState.lastResult.won ? "winGame" : "loseGame");
-    showHandicap();
+    showMatchStats();
   }
   function teamLine(id, score, winner, playerId, placeholder) {
     if (id === null) return `<div class="bracket-team pending"><span>${placeholder}</span></div>`;
@@ -247,20 +303,41 @@
     lastResult = { playerScore, opponentScore, opponentId: match.opponentId, won: playerScore > opponentScore };
     persist();
     playSound(lastResult.won ? "winGame" : "loseGame");
-    showBracket();
+    showMatchStats();
   }
   window.initGameComplete = function() {
+    if (gameState !== "game") return;
+    const result = stats.finish();
+    if (!result) return;
+    matchResult = result;
     if (mode === "finals") return finishFinal();
     if (mode === "handicap") return finishHandicap();
-    return original.complete();
+    const completion = original.complete();
+    gameState = "matchFinishing";
+    return completion;
+  };
+  // The original completion callback combines saving World progress with a
+  // canvas result screen. Keep its progression here and replace that screen.
+  window._initGameComplete = function() {
+    if (gameState !== "matchFinishing" || !matchResult) return;
+    if (window.famobi.pointerLockHelper) userInput.unlockPointer();
+    if (window.audioType === 1) music.fade(music.volume(), .5 * masterVolume, 500);
+    if (matchResult.won) {
+      oGameData.gameId++;
+      if (oGameData.gameId >= 6) {
+        oGameData.cupId++;
+        justWonCup = true;
+        if (oGameData.cupId > 9) { oGameData.cupId = 10; oGameData.gameId = 6; }
+        else oGameData.gameId = 0;
+      }
+      saveDataHandler.setGameData(oGameData);
+      saveDataHandler.saveData();
+    }
+    playSound(matchResult.won ? "winGame" : "loseGame");
+    showMatchStats();
   };
   window.initStartScreen = function() {
-    activeMatch = null;
-    mode = null;
-    restoreWorld();
-    stopScreen();
-    hide();
-    return original.start();
+    return showTitle();
   };
   window.butEventHandler = function(id, data) {
     if (["playFromStart", "cupsFromStart", "changeCountryFromStart"].includes(id)) return chooseCountry();
@@ -273,11 +350,14 @@
       return showModes();
     }
     if ((mode === "finals" || mode === "handicap") && id === "quitFromPause") {
+      stats.abandon();
       activeMatch = null;
       if (window.audioType === 1 && !window.muted) { Howler.mute(false); playMusic(); }
       return mode === "finals" ? showBracket() : showHandicap();
     }
-    return original.button(id, data);
+    const result = original.button(id, data);
+    if (["tickFromTut", "playFromPause"].includes(id)) stats.announce();
+    return result;
   };
   flow.addEventListener("click", event => {
     const button = event.target.closest("button[data-action]");
@@ -288,6 +368,9 @@
     else if (action === "country") chooseCountry();
     else if (action === "modes") showModes();
     else if (action === "home") initStartScreen();
+    else if (action === "play") eligible().includes(oGameData.userId) ? showModes() : chooseCountry();
+    else if (action === "stats") showStats();
+    else if (action === "continue-result") continueResult();
     else if (action === "play-final") playFinal();
     else if (action === "play-handicap") playHandicap();
     else if (action === "new-handicap" && mode === "handicap" && gameState === "handicapProgress" && handicapState?.status === "complete") {
@@ -301,7 +384,7 @@
     }
   });
   window.TableTennisModes = {
-    chooseCountry, chooseMode, chooseDifficulty, showModes, showBracket, playFinal, showHandicap, playHandicap,
+    chooseCountry, chooseMode, chooseDifficulty, showTitle, showStats, showModes, showBracket, playFinal, showHandicap, playHandicap,
     get handicap() { return handicapState ? JSON.parse(JSON.stringify(handicapState)) : null; },
     get mode() { return mode; }, get finals() { return state ? JSON.parse(JSON.stringify(state)) : null; }
   };

@@ -129,7 +129,7 @@ async function boot(width, height, blockedStorage = false, memory = new Map()) {
     await Promise.resolve();
   }
   for (let i = 0; i < 90; i++) await tick();
-  assert.equal(context.gameState, "start", "Original menu must finish loading");
+  assert.equal(context.gameState, "title", "Play/Stats title must finish loading");
   assert.equal(loading.hidden, true);
   assert.ok(imagePaths.has("images/gameElements.png") && drawCalls > 0);
   async function ticks(count = 45) { for (let i = 0; i < count; i++) await tick(); }

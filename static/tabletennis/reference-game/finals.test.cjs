@@ -114,10 +114,12 @@ async function scoreMatch(h, won = true) {
   h.context.oGameData.userScore = won ? 10 : 8;
   h.context.oGameData.enemyScore = won ? 8 : 10;
   h.context.updateScore(won ? "user" : "enemy", "test");
-  assert.equal(h.context.gameState, "finalsBracket");
+  assert.equal(h.context.gameState, "matchStats");
+  assert.match(h.flow.innerHTML, /Match points saved/);
   const state = JSON.stringify(h.context.TableTennisModes.finals);
   h.context.initGameComplete();
   assert.equal(JSON.stringify(h.context.TableTennisModes.finals), state, "Duplicate result callback is harmless");
+  h.click("continue-result");
   await h.ticks(4);
   assert.equal(h.context.gameState, "finalsBracket");
   assert.equal(h.flow.hidden, false);
@@ -240,6 +242,8 @@ test("immediately starting the next round runs one match loop", async () => {
   // Exercise the original ball's scoring path, including its service-reset callback.
   Object.assign(h.context.ball, { servingState: 1, offTable: true, tablePosY: 1.5, height: -210, lastHit: "enemy", bounceNum: 0 });
   await h.tick();
+  assert.equal(h.context.gameState, "matchStats");
+  h.click("continue-result");
   assert.equal(h.context.gameState, "finalsBracket");
   h.click("play-final");
   await Promise.resolve();

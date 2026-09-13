@@ -106,10 +106,12 @@ async function play(h) {
 function score(h, winner) {
   const c = h.context;
   for (let points = 0; points < 100 && c.gameState === "game"; points++) c.updateScore(winner);
-  assert.equal(c.gameState, "handicapProgress");
+  assert.equal(c.gameState, "matchStats");
   const result = plain(c.TableTennisModes.handicap);
   c.initGameComplete();
   assert.deepEqual(plain(c.TableTennisModes.handicap), result, "Duplicate completion is harmless");
+  h.click("continue-result");
+  assert.equal(c.gameState, "handicapProgress");
 }
 
 for (const [width, height] of [[1440, 900], [390, 844], [844, 390]]) {
@@ -228,6 +230,8 @@ test("immediate next-stage launch leaves exactly one game loop", async () => {
   c.oGameData.userScore = 10;
   Object.assign(c.ball, { servingState: 1, offTable: true, tablePosY: 1.5, height: -210, lastHit: "enemy", bounceNum: 0 });
   await h.tick();
+  assert.equal(c.gameState, "matchStats");
+  h.click("continue-result");
   assert.equal(c.gameState, "handicapProgress");
   h.click("play-handicap");
   await Promise.resolve(); await Promise.resolve();
