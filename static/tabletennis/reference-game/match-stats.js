@@ -4,7 +4,7 @@
   const KEY = "player-stats:v1";
   const fields = ["pointsWon", "servePointsWon", "returnPointsWon", "unforcedErrors", "matchPointsSaved"];
   const side = () => Object.fromEntries(fields.map(key => [key, 0]));
-  const empty = () => ({ version: 1, matches: 0, wins: 0, losses: 0, player: side(), opponent: side(), longestRally: 0 });
+  const empty = () => ({ version: 1, matches: 0, wins: 0, losses: 0, player: side(), opponent: side(), longestRally: 0, totalRallyHits: 0, ralliesTracked: 0 });
   const clone = value => JSON.parse(JSON.stringify(value));
   const integer = value => Number.isSafeInteger(value) && value >= 0;
   function restore(raw) {
@@ -14,6 +14,15 @@
       for (const team of [data.player, data.opponent]) {
         if (!team || !fields.every(key => integer(team[key])) || team.servePointsWon + team.returnPointsWon !== team.pointsWon) return empty();
       }
+      // Earlier stats records did not retain rally totals. Preserve those
+      // matches, and average only the points whose rally length is known.
+      if (data.totalRallyHits === undefined && data.ralliesTracked === undefined) {
+        data.totalRallyHits = 0;
+        data.ralliesTracked = 0;
+      }
+      if (![data.totalRallyHits, data.ralliesTracked].every(integer) ||
+        data.ralliesTracked > data.player.pointsWon + data.opponent.pointsWon ||
+        (data.ralliesTracked === 0 && data.totalRallyHits !== 0)) return empty();
       return data;
     } catch { return empty(); }
   }
@@ -48,15 +57,16 @@
     bannerKey = "";
   }
   function announce() {
-    if (!current || gameState !== "game" || firstRun) return clearBanner();
+    if (!current || gameState !== "game" || firstRun || window.ball?.servingState > 0) return clearBanner();
     const points = matchPoints(oGameData.userScore, oGameData.enemyScore);
     const owner = points.user ? "user" : points.enemy ? "enemy" : null;
     if (!owner) return clearBanner();
-    const key = `${owner}:${points[owner]}`;
+    const both = points.user > 0 && points.enemy > 0;
+    const key = `${both ? "both" : owner}:${points[owner]}`;
     if (key === bannerKey) return;
     clearBanner();
     bannerKey = key;
-    banner.textContent = `${owner === "user" ? "You" : "Opponent"}: ${points[owner]} match point${points[owner] === 1 ? "" : "s"}`;
+    banner.textContent = `${both ? "Both players" : owner === "user" ? "You" : "Opponent"}: ${points[owner]} match point${points[owner] === 1 ? "" : "s"}`;
     banner.hidden = false;
     bannerTimer = setTimeout(() => { banner.hidden = true; banner.textContent = ""; }, 4000);
   }
@@ -64,7 +74,7 @@
   function begin() {
     clearBanner();
     completed = null;
-    current = { player: side(), opponent: side(), longestRally: 0,
+    current = { player: side(), opponent: side(), longestRally: 0, totalRallyHits: 0, ralliesTracked: 0,
       playerId: oGameData.userId, opponentId: oGameData.enemyId,
       mode: window.TableTennisModes?.mode ?? "world", difficulty: window.MatchDifficulty.selected,
       startingScore: [oGameData.userScore, oGameData.enemyScore] };
@@ -80,7 +90,10 @@
     if (matchPoints(oGameData.userScore, oGameData.enemyScore)[other]) team.matchPointsSaved++;
     const error = errorSide(ball, winner);
     if (error) current[error === "user" ? "player" : "opponent"].unforcedErrors++;
-    current.longestRally = Math.max(current.longestRally, Math.max(0, window.rallyHits || 0));
+    const hits = Math.max(0, window.rallyHits || 0);
+    current.longestRally = Math.max(current.longestRally, hits);
+    current.totalRallyHits += hits;
+    current.ralliesTracked++;
   }
   function finish() {
     if (!current || !(wins(oGameData.userScore, oGameData.enemyScore) || wins(oGameData.enemyScore, oGameData.userScore))) return null;
@@ -90,6 +103,8 @@
     totals[completed.won ? "wins" : "losses"]++;
     for (const team of ["player", "opponent"]) for (const field of fields) totals[team][field] += completed[team][field];
     totals.longestRally = Math.max(totals.longestRally, completed.longestRally);
+    totals.totalRallyHits += completed.totalRallyHits;
+    totals.ralliesTracked += completed.ralliesTracked;
     window.famobi.localStorage.setItem(KEY, JSON.stringify(totals));
     abandon();
     return clone(completed);
@@ -105,10 +120,15 @@
   Elements.Ball.prototype.resetServe = function(server) {
     this.statsServer = server;
     this.statsLastShot = null;
-    return originalServe.call(this, server);
+    const result = originalServe.call(this, server);
+    // Scoring runs before the source resets the ball. Announce only once it
+    // reaches this between-points state, never over the previous live ball.
+    if (this === window.ball) announce();
+    return result;
   };
   const originalShot = Elements.Ball.prototype.setBouncePoint;
   Elements.Ball.prototype.setBouncePoint = function(...args) {
+    if (this === window.ball) clearBanner();
     this.statsLastShot = this.lastHit;
     return originalShot.apply(this, args);
   };

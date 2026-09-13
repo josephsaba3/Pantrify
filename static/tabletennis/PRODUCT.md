@@ -10,7 +10,7 @@ A static local copy in `reference-game/`. Root `index.html` opens its entry page
 
 ## Game modes
 
-The main flow is Play, choose country, choose World mode, Finals system, or CPU Handicap, then choose Easy, Medium, Challenging, or Hard. World mode preserves the original tour and saved progress; the selected difficulty controls the opponent independently of the tour's round.
+The title offers Play and Stats. Play asks for a country on first use, or reuses the saved country, then opens World mode, Finals system, or CPU Handicap and the Easy, Medium, Challenging, or Hard difficulty choices. Change country remains available in the mode chooser. World mode preserves the original tour and saved progress; the selected difficulty controls the opponent independently of the tour's round.
 
 Finals system is a 32-country single-elimination competition: round of 32, round of 16, quarterfinals, semifinals, final. The draw includes the selected country and 31 distinct opponents from the original available countries. The player plays their own matches; other matches are simulated when each round finishes. Five wins make the player champion. One loss eliminates the player and completes the remaining draw so its champion and results can be shown.
 
@@ -24,10 +24,16 @@ Keep the copied game's player paddle movement, aiming, shot-speed cap, spin resp
 
 The source is the supplied `Downloads.zip`; missing media was restored from the same public game's CDN. Origin and hashes are recorded in `reference-game/source-manifest.json`. The original bundle and assets retain their source identity.
 
+## Match and player stats
+
+Every completed player match opens an opponent comparison before continuing the current mode. It shows both countries and the final score, points won, points won on serve and return, unforced errors, match points saved, and longest and average rally length in returns. Average rally length is total returns divided by actual points played. Unforced errors count shots into the net or out, excluding missed returns. A match point saved is a point won when the opponent could have won the match. Between points, a banner names who holds match points and how many remain for up to four seconds; it clears when the serve starts, on pause or on exit.
+
+Stats on the title shows completed matches, wins, losses, win rate, cumulative player/opponent figures and longest and average rally length across every mode, country and difficulty. The all-time rally average is weighted across recorded points. Totals begin with this update; older results, simulated Finals matches and unfinished or restarted attempts do not contribute. CPU Handicap free starting points are excluded from points won and rally averages but remain part of the final score. Totals save in this browser's localStorage, with session-only fallback when storage is blocked or writes fail.
+
 ## Previous work
 
 The custom Rally Eleven game remains available through `rally-eleven.html`, with its earlier product brief preserved in `RALLY_ELEVEN_PRODUCT.md`. The active game is the copied reference, not that earlier implementation.
 
 ## Verification limits
 
-Source/asset integrity, country/mode routing, World matches, finals draws and results, five-win championships, elimination, saved progress, World isolation, pause/restart/quit, and storage fallback were checked with the copied code in a simulated DOM. Live browser input, rendering, and audio remain unverified because no browser was connected.
+Source/media smoke and feature checks use a simulated DOM and canvas. They cover navigation, scoring and statistics, progression, persistence, unfinished-match handling and storage fallback. Live browser input, rendering, touch and audio remain unverified because no browser was connected.

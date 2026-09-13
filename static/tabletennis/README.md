@@ -8,7 +8,7 @@ The original paddle movement, aiming, ball physics, and match rendering are reta
 
 ## Game flow
 
-Press Play, choose your country, choose **World mode**, **Finals system**, or **CPU Handicap**, then choose **Easy**, **Medium**, **Challenging**, or **Hard**.
+The title offers **Play** and **Stats**. Press Play, choose your country on first use, choose **World mode**, **Finals system**, or **CPU Handicap**, then choose **Easy**, **Medium**, **Challenging**, or **Hard**. Later visits reuse your saved country; Change country remains available in the mode chooser.
 
 - World mode keeps the original tour and its saved progress.
 - Finals draws 32 distinct countries, including yours, into a single-elimination bracket: round of 32, round of 16, quarterfinals, semifinals, final.
@@ -22,11 +22,18 @@ Difficulty applies to all three modes. Easy gives the opponent slower reactions,
 
 Player paddle movement, shot power limits, and ball physics are unchanged. World tour progress is shared across difficulty choices; Finals keeps each level separate. Existing finals saves from before this feature resume under Easy with the same draw and completed results.
 
+## Match and all-time stats
+
+Every completed match shows the final score and an opponent comparison: points won, points won on serve and return, unforced errors, match points saved, and longest and average rally length in returns. The rally average divides total returns by actual points played. Unforced errors count shots into the net or out, excluding missed returns. Match points saved count points won when the opponent could have won the match. Between points, a banner names who holds match points and how many remain for up to four seconds, clearing when the serve starts. Continue returns to the current mode.
+
+Stats on the title adds matches played, wins, losses and win rate to cumulative player/opponent figures across every mode, country and difficulty, with an all-time rally average weighted across recorded points. Totals begin with this update and include completed player matches only. Unfinished or restarted attempts and simulated Finals matches do not contribute; CPU Handicap free starting points are excluded from points won and rally averages, while remaining part of the final score. Stats save in this browser's localStorage, with session-only fallback when storage is blocked or writes fail.
+
 ## Files to build on
 
 - [reference-game/game.js](reference-game/game.js): copied game and library bundle; identical to the supplied source at the start of this baseline.
 - [reference-game/local-platform.js](reference-game/local-platform.js): local platform callbacks and separate saved progress.
 - [reference-game/game-modes.js](reference-game/game-modes.js): country/mode navigation and finals integration.
+- [reference-game/match-stats.js](reference-game/match-stats.js): match bookkeeping, match-point announcements and persistent player totals.
 - [reference-game/difficulty.js](reference-game/difficulty.js): opponent profiles, reactions, movement, return placement, pace, and spin.
 - [reference-game/finals-tournament.js](reference-game/finals-tournament.js): 32-country draw, results, progression, and save validation.
 - [reference-game/handicap-challenge.js](reference-game/handicap-challenge.js): CPU head starts, five-stage progression, retries, and saved results.
@@ -48,7 +55,9 @@ Run `node reference-game/difficulty.test.cjs` for 9 difficulty checks covering a
 
 Run `node reference-game/handicap.test.cjs` for 11 CPU Handicap checks: five actual starting scores, wins/losses, deuce, completion, pause/restart/quit, saved progress, country/difficulty isolation, failed storage, World/Finals score isolation, and immediate next-stage transitions.
 
-These checks run against a simulated DOM and canvas. They do not verify live browser input, rendering, or audio playback. No browser was connected during implementation. Saved progress requires browser storage; when unavailable, the game supports the current session only.
+Run `node reference-game/match-stats.test.cjs` for checks covering title/Stats navigation, match comparisons, rally statistics, serve/return points, net/out errors, match points and announcement timing, cumulative totals, Handicap exclusions, unfinished attempts, storage fallback and World continuation.
+
+These checks run against a simulated DOM and canvas. They do not verify live browser input, rendering, touch or audio playback. No browser was connected during implementation. Saved progress requires browser storage; when unavailable, the game supports the current session only.
 
 ## Previous version
 

@@ -1,6 +1,6 @@
 ---
 name: Table Tennis World Tour - local modes
-description: Original game imagery with native mode selection, a complete finals bracket and CPU Handicap progress.
+description: Original game imagery with native title and stats screens, mode selection, a complete finals bracket and CPU Handicap progress.
 colors:
   ink: "#182b4c"
   paper: "#f6f8fc"
@@ -67,7 +67,7 @@ components:
 
 ## Overview
 
-The active game is the supplied copy in [reference-game/](reference-game/). Extend its blue denim backdrop, country flags, map and trophy artwork faithfully. The original title, country selection, tutorial, World tour, match and pause screens retain the copied canvas presentation. Country selection leads to mode selection, then Easy, Medium, Challenging or Hard. The added mode and difficulty choosers, Finals bracket and CPU Handicap progress page use native HTML controls with the same game imagery.
+The active game is the supplied copy in [reference-game/](reference-game/). Extend its blue denim backdrop, country flags, map and trophy artwork faithfully. Country selection, tutorial, World tour, match and pause screens retain the copied canvas presentation. The native title reuses the original logo and bat artwork with Play and Stats actions. Country selection leads to mode selection, then Easy, Medium, Challenging or Hard. The added title, stats, mode and difficulty choosers, Finals bracket and CPU Handicap progress page use the established navy, gold and Archivo system with the same game imagery.
 
 The implementation authority is [game-modes.css](reference-game/game-modes.css) and [game-modes.js](reference-game/game-modes.js). This document captures their current styles; the tokens above describe the new HTML menus, not a replacement theme for the canvas. The source bundle and media remain unchanged. Visual and input verification in a live browser is still outstanding; the recorded checks use a simulated DOM and canvas.
 
@@ -95,6 +95,8 @@ The CPU Handicap page is at most 900px wide. Its order is heading and latest res
 
 The Finals view is at most 1300px wide. Its order is heading and result, next-match action, round navigation, then the full bracket. On phones the header and match summary stack. All five rounds remain in the board: fixed 220px columns, 28px gaps and a shared 32-row grid align advancing matches. The board scrolls horizontally and vertically, keeps round headings sticky and opens at the player's current match. Round buttons scroll to columns without hiding the other rounds.
 
+The title centers a vertical composition in a container at most 520px wide, with actions at least 56px tall. Short landscape viewports reduce the artwork and place Play and Stats beside each other. Match results and all-time stats share a 760px maximum width. Their comparison table keeps statistic, You and Opponent/Opponents columns together at narrow widths, with wrapping labels and smaller cell padding. The all-time record changes from four columns to two at 650px; post-match actions stack at that width.
+
 ## Elevation & Depth
 
 The denim image supplies texture. Cream panels, navy surfaces, borders and winner fills establish separation; the new menus have no shadows or animated transitions. Round navigation uses immediate scrolling.
@@ -104,6 +106,10 @@ The denim image supplies texture. Cream panels, navy surfaces, borders and winne
 Use softly rounded rectangular controls and panels, with tighter corners for dense bracket matches. Thin borders separate teams and connect each match to the next round. The next match gets a two-pixel gold border. Preserve the original atlas artwork rather than replacing it with new icons.
 
 ## Components
+
+- **Title:** original logo and bats sit above gold Play and navy Stats buttons. A visually hidden heading names the game; native navigation labels the actions.
+- **Statistics:** cream comparison tables use navy headers, scoped row/column headings and a visually hidden caption. Bold tabular figures align for comparison; final scores use 56px figures with flags and country names. Longest and average rally length use returns as their unit. The empty record explains how to begin, and notes define errors, starting-point exclusions and browser storage. Results offer a mode-specific Continue action and Back to title.
+- **Match-point announcement:** an eight-pixel-radius gold banner with navy Archivo text sits near the top of the court. It announces the holder and remaining match points through a polite status region, stays visible for up to four seconds between points, clears when the serve starts and allows pointer input to pass through. Its lifecycle is implemented in [match-stats.js](reference-game/match-stats.js).
 
 - **Mode choices:** each complete cream panel is one native button. The World map and Finals trophy are crops of the original interface atlas; CPU Handicap uses a native score preview showing `YOU 0` and `CPU 6` in two navy panels. Hover changes the border to gold and the surface to warm cream. The inner action label is part of that same button.
 - **Difficulty choices:** `showDifficulty` renders the four native buttons using the difficulty page, options and option styles in the menu sources linked above. Each cream panel contains the level, descriptive copy and a play, continue or results action, with the same hover and focus treatment as mode choices. Finals and CPU Handicap show the selected level in gold and keep separate progress for each level; existing Finals saves continue intact under Easy.

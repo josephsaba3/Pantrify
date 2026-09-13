@@ -144,14 +144,19 @@
     return `<table class="stats-table"><caption class="stats-sr-only">${opponentLabel === "Opponents" ? "All-time" : "Match"} statistics comparison</caption><thead><tr><th scope="col">Statistic</th><th scope="col">You</th><th scope="col">${opponentLabel}</th></tr></thead><tbody>${statRows.map(([key, label]) => `<tr><th scope="row">${label}</th><td>${number(data.player[key])}</td><td>${number(data.opponent[key])}</td></tr>`).join("")}</tbody></table>`;
   }
   function statsNote() {
-    return '<p class="stats-note">Unforced errors count shots hit into the net or out. A missed return is not an unforced error.</p>';
+    return '<p class="stats-note">Unforced errors count shots hit into the net or out. A missed return is not an unforced error. Rally length counts returns per point, excluding the serve.</p>';
+  }
+  function rallySummary(data) {
+    const average = data.ralliesTracked ? `${(data.totalRallyHits / data.ralliesTracked).toFixed(1)} returns` : "\u2014";
+    const partial = data.ralliesTracked < data.player.pointsWon + data.opponent.pointsWon;
+    return `<p class="stats-rally">Average rally: <strong>${average}</strong> \u00b7 Longest rally: <strong>${number(data.longestRally)} returns</strong></p>${partial ? '<p class="stats-note">Average rally length covers points recorded since rally tracking was added.</p>' : ""}`;
   }
   function showStats() {
     const totals = stats.totals;
     show(`<div class="stats-page"><header class="finals-header"><div><h1>Your stats</h1><p>All completed matches, across every mode, country and difficulty.</p></div><button class="quiet-button" data-action="home">Back to title</button></header>
       ${totals.matches ? "" : '<p class="stats-empty">No completed matches yet. Finish a match to start your record.</p>'}
       <dl class="stats-record"><div><dt>Matches played</dt><dd>${number(totals.matches)}</dd></div><div><dt>Won</dt><dd>${number(totals.wins)}</dd></div><div><dt>Lost</dt><dd>${number(totals.losses)}</dd></div><div><dt>Win rate</dt><dd>${totals.matches ? `${Math.round(100 * totals.wins / totals.matches)}%` : "\u2014"}</dd></div></dl>
-      ${statsTable(totals, "Opponents")}<p class="stats-rally">Longest rally: <strong>${number(totals.longestRally)} returns</strong></p>${statsNote()}
+      ${statsTable(totals, "Opponents")}${rallySummary(totals)}${statsNote()}
       <p class="stats-note">Stats start with this update and save in this browser. Restarted or unfinished matches and CPU head starts are excluded.</p>
       <button class="play-button stats-play" data-action="play">Play</button>
     </div>`, "playerStats");
@@ -163,7 +168,7 @@
     show(`<div class="stats-page"><header class="mode-header"><h1>${result.won ? "You won!" : "Match complete"}</h1><p>${modeNames[result.mode]} \u00b7 ${difficulty.profiles[result.difficulty].label}</p></header>
       <div class="result-score" aria-label="Final score: You ${result.score[0]}, opponent ${result.score[1]}"><div>${flag(result.playerId)}<span>You \u00b7 ${escape(countryName(result.playerId))}</span><strong>${result.score[0]}</strong></div><span class="result-versus" aria-hidden="true">\u2013</span><div>${flag(result.opponentId)}<span>${escape(countryName(result.opponentId))} (CPU)</span><strong>${result.score[1]}</strong></div></div>
       <h2 class="stats-heading">Match stats</h2>${statsTable(result, "Opponent")}
-      <p class="stats-rally">Longest rally: <strong>${number(result.longestRally)} returns</strong></p>${statsNote()}
+      ${rallySummary(result)}${statsNote()}
       ${result.startingScore[1] ? `<p class="stats-note">The CPU started with ${result.startingScore[1]} points. Points won counts only points played.</p>` : ""}
       <nav class="stats-actions" aria-label="After match"><button class="play-button" data-action="continue-result">${next}</button><button class="quiet-button" data-action="home">Back to title</button></nav>
     </div>`, "matchStats");
