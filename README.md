@@ -1,6 +1,6 @@
 # Pantrify
 
-A small shared grocery list with a mobile-first interface and PostgreSQL purchase history. Also a features a table tennis game in HTML5 because I was too lazy to deploy a separate server.
+A small shared grocery list with a mobile-first interface and PostgreSQL purchase history. Also features a table tennis game in HTML5 because I was too lazy to deploy a separate server.
 
 ## Run it
 
