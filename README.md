@@ -24,3 +24,6 @@ Add a `DATABASE_URL` reference variable to the Pantrify service using `${{Postgr
 - “Last time” history with one-tap re-adding
 - Previous purchase date shown when a familiar item returns to the list
 - Automatic refresh every five seconds for simple two-person sharing
+
+## But why?
+**Build note:** [Why I built Pantrify instead of paying for a shared shopping list](https://josephsaba.me/blog/i-built-pantrify-in-15-minutes/)
