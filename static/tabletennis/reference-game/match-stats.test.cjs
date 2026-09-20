@@ -200,6 +200,55 @@ test("a match comparison includes its last point, serve/return splits, errors an
   assert.equal(JSON.stringify(h.context.MatchStats.totals), saved);
 });
 
+test("untouched legal serves count as aces for either side, with faults and rallies excluded", async () => {
+  const h = await boot(390, 844);
+  await launch(h, "finals");
+  const c = h.context;
+  for (const server of ["user", "enemy"]) {
+    c.ball.resetServe(server);
+    assert.equal(c.ball.statsLastShot, null);
+    if (server === "enemy") c.ball.enemyServe();
+    else c.ball.setBouncePoint({ x: 0, y: .3, speed: .3, spin: 0 });
+    Object.assign(c.ball, { offTable: true, offSide: false, height: -210, bounceNum: 2, tablePosY: 1.5 });
+    c.delta = 0;
+    c.ball.update(); // Actual terminal scoring captures the serve before resetting it.
+  }
+  assert.equal(c.MatchStats.current.player.aces, 1);
+  assert.equal(c.MatchStats.current.opponent.aces, 1);
+  for (const server of ["user", "enemy"]) {
+    const receiver = server === "user" ? "enemy" : "user";
+    point(h, server, { server, error: true, hits: 1 }); // Receiver touches it but hits out.
+    point(h, server, { server, hits: 2 }); // Server wins after a rally.
+    point(h, receiver, { server, error: true }); // Serve fault.
+  }
+  assert.equal(c.MatchStats.current.player.aces, 1);
+  assert.equal(c.MatchStats.current.opponent.aces, 1);
+  await finish(h);
+  assert.match(h.flow.innerHTML, /Aces<\/th><td>1<\/td><td>1<\/td>/);
+  assert.equal(c.MatchStats.completed.player.aces, 1);
+  assert.equal(c.MatchStats.totals.opponent.aces, 1);
+  const reload = await boot(390, 844, false, h.memory);
+  reload.click("stats");
+  assert.match(reload.flow.innerHTML, /Aces<\/th><td>1<\/td><td>1<\/td>/);
+});
+
+test("older totals keep their history when aces are added and invalid ace counts are rejected", async () => {
+  const h = await boot(390, 844);
+  await launch(h); await finish(h);
+  const legacy = plain(h.context.MatchStats.totals);
+  delete legacy.player.aces; delete legacy.opponent.aces;
+  h.context.famobi.localStorage.setItem("player-stats:v1", JSON.stringify(legacy));
+  const restored = plain(h.context.MatchStats.totals);
+  assert.deepEqual(restored, { ...legacy, player: { ...legacy.player, aces: 0 }, opponent: { ...legacy.opponent, aces: 0 } });
+  await launch(h, "handicap"); await finish(h);
+  assert.equal(h.context.MatchStats.totals.matches, 2);
+  assert.equal(h.context.MatchStats.totals.player.pointsWon, 22);
+  for (const aces of [-1, null, "1", 0.5, 12]) {
+    const invalid = { ...restored, player: { ...restored.player, aces } };
+    assert.equal(h.context.MatchStats.restore(JSON.stringify(invalid)).matches, 0);
+  }
+});
+
 test("all-time totals combine modes, countries and difficulties, and survive reload", async () => {
   const memory = new Map(), h = await boot(1440, 900, false, memory);
   await launch(h, "world", "easy"); await finish(h);

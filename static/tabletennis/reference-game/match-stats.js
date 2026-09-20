@@ -2,7 +2,7 @@
 (() => {
   "use strict";
   const KEY = "player-stats:v1";
-  const fields = ["pointsWon", "servePointsWon", "returnPointsWon", "unforcedErrors", "matchPointsSaved"];
+  const fields = ["pointsWon", "aces", "servePointsWon", "returnPointsWon", "unforcedErrors", "matchPointsSaved"];
   const side = () => Object.fromEntries(fields.map(key => [key, 0]));
   const empty = () => ({ version: 1, matches: 0, wins: 0, losses: 0, player: side(), opponent: side(), longestRally: 0, totalRallyHits: 0, ralliesTracked: 0 });
   const clone = value => JSON.parse(JSON.stringify(value));
@@ -12,7 +12,10 @@
       const data = JSON.parse(raw);
       if (data?.version !== 1 || ![data.matches, data.wins, data.losses, data.longestRally].every(integer) || data.wins + data.losses !== data.matches) return empty();
       for (const team of [data.player, data.opponent]) {
+        // Keep existing match history; aces cannot be reconstructed from old totals.
+        if (team && team.aces === undefined) team.aces = 0;
         if (!team || !fields.every(key => integer(team[key])) || team.servePointsWon + team.returnPointsWon !== team.pointsWon) return empty();
+        if (team.aces > team.servePointsWon) return empty();
       }
       // Earlier stats records did not retain rally totals. Preserve those
       // matches, and average only the points whose rally length is known.
@@ -91,6 +94,10 @@
     const error = errorSide(ball, winner);
     if (error) current[error === "user" ? "player" : "opponent"].unforcedErrors++;
     const hits = Math.max(0, window.rallyHits || 0);
+    // A legal serve bounces on both halves before the receiver can touch it.
+    // A return (even one hit out) ends the ace opportunity.
+    if (ball.statsServer === winner && ball.statsLastShot === winner && ball.lastHit === winner &&
+      ball.servingState === 1 && ball.bounceNum >= 2 && ball.ballShortState === 0 && hits === 0) team.aces++;
     current.longestRally = Math.max(current.longestRally, hits);
     current.totalRallyHits += hits;
     current.ralliesTracked++;

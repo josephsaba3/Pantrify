@@ -153,7 +153,7 @@ test("return pace, spin, and open-space placement increase while player controls
       assert.deepEqual(plain(again), plain(shot), "Analytics observes the same stroke that was hit");
       assert.ok(shot.speed >= 0.3 && shot.speed <= opponent.profile.paceCap);
       assert.ok(Math.abs(shot.spin) <= opponent.profile.spin);
-      assert.ok(shot.y >= 0.65 && shot.y <= 0.99 && Math.abs(shot.x) <= 1.12);
+      assert.ok(shot.y >= 0.65 && shot.y <= 1.24 && Math.abs(shot.x) <= 1.60);
       total.pace += shot.speed;
       total.spin += Math.abs(shot.spin);
       total.open += shot.x < -0.25 ? 1 : 0;
@@ -202,16 +202,16 @@ test("harder opponents return more of the same incoming balls through real paddl
     await start(h, "finals", level);
     const c = h.context;
     let returned = 0, cases = 0;
-    for (const target of [-0.85, -0.45, 0, 0.45, 0.85]) {
-      for (const speed of [0.38, 0.48, 0.58]) for (const spin of [0, 0.55]) {
-        c.Math.random = rng(17 + cases);
+    for (const seed of [17, 83, 149]) for (const startOffset of [-200, 0, 200]) for (const target of [-0.95, -0.45, 0, 0.45, 0.95]) {
+      for (const speed of [0.38, 0.50, 0.60]) for (const spin of [-0.85, 0, 0.85]) {
+        c.Math.random = rng(seed + cases % 45);
         for (const actor of [c.ball, c.enemyBat, c.tableTop]) c.TweenLite.killTweensOf(actor);
         c.enemyBat = new c.Elements.EnemyBat();
         c.ball = new c.Elements.Ball();
         for (const actor of [c.ball, c.enemyBat, c.tableTop]) c.TweenLite.killTweensOf(actor);
         Object.assign(c.oGameData, { userScore: 0, enemyScore: 0 });
         Object.assign(c.tableTop, { offsetX: 0, offsetY: 0 });
-        Object.assign(c.enemyBat, { x: c.canvas.width / 2, targX: 0, targY: 0, slideInc: 0 });
+        Object.assign(c.enemyBat, { x: c.canvas.width / 2 + startOffset, targX: startOffset, targY: 0, slideInc: 0 });
         Object.assign(c.ball, { tablePosX: 0, tablePosY: 0.9, height: 60, servingState: 2, lastHit: "user", bounceNum: 0 });
         c.rallyHits = 0;
         c.ball.setBouncePoint({ x: target, y: 0.15, speed, spin });
@@ -227,5 +227,58 @@ test("harder opponents return more of the same incoming balls through real paddl
     t.diagnostic(`${level}: ${returned}/${cases} incoming shots returned`);
   }
   assert.ok(increasing(totals), `Return coverage must rise with difficulty: ${totals}`);
-  assert.ok(totals.at(-1) < 30, "Hard can still be beaten by wide or fast shots");
+  assert.ok(totals.at(-1) < 405, "Hard can still be beaten by wide or fast shots");
+});
+
+test("all CPU levels sometimes mishit, with fewer errors at higher levels and more when stretched", async t => {
+  const rates = [];
+  for (const level of levels) {
+    const h = await boot(1440, 900);
+    await start(h, "finals", level);
+    const c = h.context, opponent = c.enemyBat;
+    const counts = [];
+    for (const pressure of [0, 1]) {
+      c.Math.random = rng(918);
+      Object.assign(c.ball, { servingState: 2, x: opponent.x + pressure * 70 * opponent.scale });
+      let errors = 0;
+      for (let i = 0; i < 4000; i++) {
+        c.rallyHits = i;
+        opponent.shotCache = null;
+        const shot = opponent.getHitData(0, .2);
+        if (shot.y > 1 || Math.abs(shot.x) > 1) errors++;
+      }
+      counts.push(errors);
+    }
+    assert.ok(counts[0] > 40 && counts[0] < 500, `${level} makes occasional ordinary errors: ${counts}`);
+    assert.ok(counts[1] > counts[0], `${level} is less accurate when stretched`);
+    rates.push(counts[0]);
+    t.diagnostic(`${level}: ${counts[0]}/4000 ordinary and ${counts[1]}/4000 stretched targets miss the table`);
+  }
+  assert.ok(increasing(rates.slice().reverse()), `Errors decrease with difficulty: ${rates}`);
+});
+
+test("CPU mishits fly out and record actual opponent unforced errors on every level", async () => {
+  for (const level of levels) for (const kind of ["long", "wide"]) {
+    const h = await boot(1440, 900);
+    await start(h, "finals", level);
+    const c = h.context;
+    c.Math.random = rng(617);
+    for (const actor of [c.ball, c.enemyBat, c.tableTop]) c.TweenLite.killTweensOf(actor);
+    Object.assign(c.tableTop, { offsetX: 0, offsetY: 0 });
+    Object.assign(c.ball, { x: c.enemyBat.x, tablePosX: 0, tablePosY: .2, height: 60,
+      servingState: 2, lastHit: "enemy", bounceNum: 0, ballShortState: 0, offTable: false, offSide: false });
+    let shot;
+    for (let i = 0; i < 5000; i++) {
+      c.enemyBat.shotCache = null;
+      shot = c.enemyBat.getHitData(0, .2);
+      if (kind === "long" ? shot.y > 1 : Math.abs(shot.x) > 1.12) break;
+    }
+    assert.ok(kind === "long" ? shot.y > 1 : Math.abs(shot.x) > 1.12, `${level} produces ${kind} mishits`);
+    c.rallyHits = 1;
+    c.ball.setBouncePoint(shot);
+    for (let frame = 0; frame < 240 && c.oGameData.userScore + c.oGameData.enemyScore === 0; frame++) await h.tick();
+    assert.equal(c.oGameData.userScore, 1, `${level} ${kind} shot really loses the point`);
+    assert.equal(c.MatchStats.current.opponent.unforcedErrors, 1, `${level} ${kind} shot counts as an error`);
+    assert.equal(c.MatchStats.current.player.aces, 0, "A CPU mishit is not an ace");
+  }
 });

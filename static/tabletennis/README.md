@@ -6,6 +6,8 @@ Open [index.html](index.html), which goes directly to [reference-game/index.html
 
 The original paddle movement, aiming, ball physics, and match rendering are retained. A local hosting adapter supplies the callbacks and storage previously provided by the portal. New menu and competition scripts add Finals and CPU Handicap without modifying the supplied bundle.
 
+Play requests browser fullscreen directly from the click on supported browsers. The title also has a Full screen / Exit full screen toggle. Fullscreen includes the entire game, so menus, results and the court stay together; Escape exits and resizes the game. If the browser blocks the automatic request, play continues normally and the title toggle can retry. Unsupported browsers keep the normal page view.
+
 ## Game flow
 
 The title offers **Play** and **Stats**. Press Play, choose your country on first use, choose **World mode**, **Finals system**, or **CPU Handicap**, then choose **Easy**, **Medium**, **Challenging**, or **Hard**. Later visits reuse your saved country; Change country remains available in the mode chooser.
@@ -18,20 +20,21 @@ The title offers **Play** and **Stats**. Press Play, choose your country on firs
 
 CPU Handicap is a five-stage comeback challenge against one CPU opponent. You start each match at 0; the CPU starts at 6, then 7, 8, 9, and 10 as you win. A loss keeps the same stage available to retry. Clearing 0-10 completes the challenge and unlocks Play again. Normal win-by-two scoring applies, so the last stage needs at least a 12-10 win. Progress saves separately for each country and difficulty, independently of World and Finals. Restarting or quitting a paused match lets you replay its original head start.
 
-Difficulty applies to all three modes. Easy gives the opponent slower reactions, gentler returns, less spin, and larger placement errors when stretched. Medium adds speed and variation. Challenging sits halfway between Medium and Hard for reaction time, movement, recovery, accuracy, return pace, and spin. Hard reacts and recovers faster, covers more ground, uses stronger spin, and aims more often away from the player's current position. Its movement and shot speeds remain capped; it can still miss.
+Difficulty applies to all three modes. Easy gives the opponent slower reactions, gentler returns, less spin, and larger placement errors when stretched. Medium adds speed and variation. All four levels now react sooner, move and recover faster, and use more pace, spin and open-space placement. Challenging sits closer to Hard, with a smaller final step in movement, accuracy and shot strength. Hard reacts and recovers faster, covers more ground, uses stronger spin, and aims more often away from the player's current position. Its movement and shot speeds remain capped; it can still miss. Opponents correct their aim after the bounce and brake near the ball. Every level can occasionally send a return long or wide; mishits become less frequent at higher levels and more likely when stretched. Those shots use the normal physics and count as unforced errors when they lose the point.
 
 Player paddle movement, shot power limits, and ball physics are unchanged. World tour progress is shared across difficulty choices; Finals keeps each level separate. Existing finals saves from before this feature resume under Easy with the same draw and completed results.
 
 ## Match and all-time stats
 
-Every completed match shows the final score and an opponent comparison: points won, points won on serve and return, unforced errors, match points saved, and longest and average rally length in returns. The rally average divides total returns by actual points played. Unforced errors count shots into the net or out, excluding missed returns. Match points saved count points won when the opponent could have won the match. Between points, a banner names who holds match points and how many remain for up to four seconds, clearing when the serve starts. Continue returns to the current mode.
+Every completed match shows the final score and an opponent comparison: points won, aces, points won on serve and return, unforced errors, match points saved, and longest and average rally length in returns. The rally average divides total returns by actual points played. An ace is a legal serve the receiver does not touch. Unforced errors count shots into the net or out, excluding missed returns. Match points saved count points won when the opponent could have won the match. Between points, a banner names who holds match points and how many remain for up to four seconds, clearing when the serve starts. Continue returns to the current mode.
 
-Stats on the title adds matches played, wins, losses and win rate to cumulative player/opponent figures across every mode, country and difficulty, with an all-time rally average weighted across recorded points. Totals begin with this update and include completed player matches only. Unfinished or restarted attempts and simulated Finals matches do not contribute; CPU Handicap free starting points are excluded from points won and rally averages, while remaining part of the final score. Stats save in this browser's localStorage, with session-only fallback when storage is blocked or writes fail.
+Stats on the title adds matches played, wins, losses and win rate to cumulative player/opponent figures across every mode, country and difficulty, with an all-time rally average weighted across recorded points. Aces count from the addition of ace tracking; older saves retain all previous stats with zero historical aces. Totals begin with this update and include completed player matches only. Unfinished or restarted attempts and simulated Finals matches do not contribute; CPU Handicap free starting points are excluded from points won and rally averages, while remaining part of the final score. Stats save in this browser's localStorage, with session-only fallback when storage is blocked or writes fail.
 
 ## Files to build on
 
 - [reference-game/game.js](reference-game/game.js): copied game and library bundle; identical to the supplied source at the start of this baseline.
 - [reference-game/local-platform.js](reference-game/local-platform.js): local platform callbacks and separate saved progress.
+- [reference-game/fullscreen.js](reference-game/fullscreen.js): browser fullscreen requests, title toggle state and resize handling.
 - [reference-game/game-modes.js](reference-game/game-modes.js): country/mode navigation and finals integration.
 - [reference-game/match-stats.js](reference-game/match-stats.js): match bookkeeping, match-point announcements and persistent player totals.
 - [reference-game/difficulty.js](reference-game/difficulty.js): opponent profiles, reactions, movement, return placement, pace, and spin.
@@ -51,13 +54,15 @@ Run `node reference-game/verify.cjs` if Node is available. It checks the source 
 
 Run `node reference-game/finals.test.cjs` for 12 finals checks covering unique 32-country draws, five wins, elimination in every round, saved/reloaded progress, invalid saves, World isolation, pause/restart/quit, duplicate results, immediate next-round transitions, and storage write failures.
 
-Run `node reference-game/difficulty.test.cjs` for 9 difficulty checks covering all four levels in all three modes at three viewport sizes, per-level saves, legacy migration, reaction timing at 30/60/144 FPS, motion limits, shot pace/spin/placement, unchanged player strokes, and real ball-to-opponent contact in a seeded 30-shot comparison. That comparison is a regression scenario, not a player win-rate estimate.
+Run `node reference-game/difficulty.test.cjs` for 11 difficulty checks covering all four levels in all three modes at three viewport sizes, per-level saves, legacy migration, reaction timing at 30/60/144 FPS, motion limits, shot pace/spin/placement, unchanged player strokes, and real ball-to-opponent contact in a seeded 405-shot comparison covering recovery from both sides, both spin directions and faster/wider shots. The suite also verifies occasional CPU mishits and real ball flights that score opponent unforced errors. That comparison is a regression scenario, not a player win-rate estimate.
 
 Run `node reference-game/handicap.test.cjs` for 11 CPU Handicap checks: five actual starting scores, wins/losses, deuce, completion, pause/restart/quit, saved progress, country/difficulty isolation, failed storage, World/Finals score isolation, and immediate next-stage transitions.
 
-Run `node reference-game/match-stats.test.cjs` for checks covering title/Stats navigation, match comparisons, rally statistics, serve/return points, net/out errors, match points and announcement timing, cumulative totals, Handicap exclusions, unfinished attempts, storage fallback and World continuation.
+Run `node reference-game/match-stats.test.cjs` for checks covering title/Stats navigation, match comparisons, rally statistics, serve/return points, aces and legacy-save compatibility, net/out errors, match points and announcement timing, cumulative totals, Handicap exclusions, unfinished attempts, storage fallback and World continuation.
 
 These checks run against a simulated DOM and canvas. They do not verify live browser input, rendering, touch or audio playback. No browser was connected during implementation. Saved progress requires browser storage; when unavailable, the game supports the current session only.
+
+Run `node reference-game/fullscreen.test.cjs` for six checks covering immediate requests from clicks, the title controls, duplicate requests, exit/Escape resizing, WebKit support and blocked/unsupported fullscreen. Browser fullscreen APIs are simulated; a live browser check remains outstanding.
 
 ## Previous version
 

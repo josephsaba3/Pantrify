@@ -134,17 +134,19 @@
     background = new Elements.Background;
     show(`<div class="title-page"><h1 class="stats-sr-only">Table Tennis World Tour</h1>
       ${art("titleLogo", "title-logo")}${art("titleBats", "title-bats")}
-      <nav class="title-actions" aria-label="Main menu"><button class="play-button" data-action="play">Play</button><button class="quiet-button" data-action="stats">Stats</button></nav>
+      <nav class="title-actions" aria-label="Main menu"><button class="play-button" data-action="play">Play</button><button class="quiet-button" data-action="stats">Stats</button>${window.GameFullscreen.supported ? '<button class="quiet-button" data-action="fullscreen" aria-pressed="false">Full screen</button>' : ""}</nav>
+      <p class="fullscreen-status" data-fullscreen-status role="status" aria-live="polite"></p>
     </div>`, "title");
+    window.GameFullscreen.sync();
     window.famobi.gameReady();
   }
-  const statRows = [["pointsWon", "Points won"], ["servePointsWon", "Points won on serve"], ["returnPointsWon", "Points won on return"], ["unforcedErrors", "Unforced errors"], ["matchPointsSaved", "Match points saved"]];
+  const statRows = [["pointsWon", "Points won"], ["aces", "Aces"], ["servePointsWon", "Points won on serve"], ["returnPointsWon", "Points won on return"], ["unforcedErrors", "Unforced errors"], ["matchPointsSaved", "Match points saved"]];
   const number = value => value.toLocaleString("en");
   function statsTable(data, opponentLabel) {
     return `<table class="stats-table"><caption class="stats-sr-only">${opponentLabel === "Opponents" ? "All-time" : "Match"} statistics comparison</caption><thead><tr><th scope="col">Statistic</th><th scope="col">You</th><th scope="col">${opponentLabel}</th></tr></thead><tbody>${statRows.map(([key, label]) => `<tr><th scope="row">${label}</th><td>${number(data.player[key])}</td><td>${number(data.opponent[key])}</td></tr>`).join("")}</tbody></table>`;
   }
   function statsNote() {
-    return '<p class="stats-note">Unforced errors count shots hit into the net or out. A missed return is not an unforced error. Rally length counts returns per point, excluding the serve.</p>';
+    return '<p class="stats-note">An ace is a legal serve the receiver does not touch. Unforced errors count shots hit into the net or out. A missed return is not an unforced error. Rally length counts returns per point, excluding the serve.</p>';
   }
   function rallySummary(data) {
     const average = data.ralliesTracked ? `${(data.totalRallyHits / data.ralliesTracked).toFixed(1)} returns` : "\u2014";
@@ -157,7 +159,7 @@
       ${totals.matches ? "" : '<p class="stats-empty">No completed matches yet. Finish a match to start your record.</p>'}
       <dl class="stats-record"><div><dt>Matches played</dt><dd>${number(totals.matches)}</dd></div><div><dt>Won</dt><dd>${number(totals.wins)}</dd></div><div><dt>Lost</dt><dd>${number(totals.losses)}</dd></div><div><dt>Win rate</dt><dd>${totals.matches ? `${Math.round(100 * totals.wins / totals.matches)}%` : "\u2014"}</dd></div></dl>
       ${statsTable(totals, "Opponents")}${rallySummary(totals)}${statsNote()}
-      <p class="stats-note">Stats start with this update and save in this browser. Restarted or unfinished matches and CPU head starts are excluded.</p>
+      <p class="stats-note">Stats save in this browser. Aces count from when ace tracking was added. Restarted or unfinished matches and CPU head starts are excluded.</p>
       <button class="play-button stats-play" data-action="play">Play</button>
     </div>`, "playerStats");
   }
@@ -345,6 +347,7 @@
     return showTitle();
   };
   window.butEventHandler = function(id, data) {
+    if (["playFromStart", "playFromGameIntro"].includes(id)) window.GameFullscreen.enter();
     if (["playFromStart", "cupsFromStart", "changeCountryFromStart"].includes(id)) return chooseCountry();
     if (id === "countryChoice") {
       const selected = countryFlags.aIds[data?.id];
@@ -368,6 +371,7 @@
     const button = event.target.closest("button[data-action]");
     if (!button || !flow.contains(button)) return;
     const action = button.dataset.action;
+    if (["play", "play-final", "play-handicap"].includes(action)) window.GameFullscreen.enter();
     if (Object.hasOwn(modeNames, action)) chooseMode(action);
     else if (action === "difficulty") chooseDifficulty(button.dataset.level);
     else if (action === "country") chooseCountry();
@@ -375,6 +379,7 @@
     else if (action === "home") initStartScreen();
     else if (action === "play") eligible().includes(oGameData.userId) ? showModes() : chooseCountry();
     else if (action === "stats") showStats();
+    else if (action === "fullscreen") window.GameFullscreen.toggle();
     else if (action === "continue-result") continueResult();
     else if (action === "play-final") playFinal();
     else if (action === "play-handicap") playHandicap();
