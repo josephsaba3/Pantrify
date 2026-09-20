@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="/static/styles.css?v=3">
   <link rel="stylesheet" href="/static/autocomplete.css?v=1">
   <link rel="stylesheet" href="/static/new-list-dialog.css?v=1">
-  <link rel="stylesheet" href="/static/cute-toggle.css?v=1">
+  <link rel="stylesheet" href="/static/cute-toggle.css?v=2">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to shopping list</a>
@@ -21,9 +21,12 @@
       <div class="list-status">
         <div class="list-status-copy" aria-live="polite"><span id="cute-status">Bree is 100% cute</span><span> ·</span>
           <strong id="remaining-count">0</strong> remaining <span>·</span> <strong id="done-count">0</strong> done</div>
-        100% cute: <button id="cute-toggle" class="cute-toggle" type="button" role="switch" aria-checked="false" aria-label="Joe is 100% cute" aria-describedby="cute-status">
-          <span aria-hidden="true">Bree</span><span aria-hidden="true">Joe</span>
-        </button>
+        <div class="cute-toggle-row">
+          <span>100% cute:</span>
+          <button id="cute-toggle" class="cute-toggle" type="button" role="switch" aria-checked="false" aria-label="Joe is 100% cute" aria-describedby="cute-status">
+            <span aria-hidden="true">Bree</span><span aria-hidden="true">Joe</span>
+          </button>
+        </div>
       </div>
       <div class="header-actions">
         <button class="button button-secondary" data-new-list>New list</button>

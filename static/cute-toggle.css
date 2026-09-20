@@ -15,6 +15,15 @@
   text-align: right;
 }
 
+.cute-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex: none;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
 .cute-toggle {
   position: relative;
   display: grid;
@@ -74,6 +83,7 @@
     grid-column: 1 / -1;
     grid-row: 2;
     flex-direction: row;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: var(--space-md);
