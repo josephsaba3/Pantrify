@@ -1,4 +1,16 @@
 const $=s=>document.querySelector(s);let current={categories:[],items:[],recent:[]},editingItem=null;
+const cuteToggle = $('#cute-toggle');
+let cuteToggleTimer;
+cuteToggle.addEventListener('click', () => {
+  clearTimeout(cuteToggleTimer);
+  const joeSelected = cuteToggle.getAttribute('aria-checked') !== 'true';
+  cuteToggle.setAttribute('aria-checked', String(joeSelected));
+  if (joeSelected) {
+    cuteToggleTimer = setTimeout(() => {
+      cuteToggle.setAttribute('aria-checked', 'false');
+    }, 750);
+  }
+});
 function escapeHtml(v){return String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
 function dateText(v){return v?new Intl.DateTimeFormat(undefined,{day:'numeric',month:'long'}).format(new Date(v)):'';}
 function toast(m){const e=$('#toast');e.textContent=m;e.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>e.classList.remove('show'),2200);}
