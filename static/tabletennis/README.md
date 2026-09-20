@@ -6,7 +6,7 @@ Open [index.html](index.html), which goes directly to [reference-game/index.html
 
 The original paddle movement, aiming, ball physics, and match rendering are retained. A local hosting adapter supplies the callbacks and storage previously provided by the portal. New menu and competition scripts add Finals and CPU Handicap without modifying the supplied bundle.
 
-Play requests browser fullscreen directly from the click on supported browsers. The title also has a Full screen / Exit full screen toggle. Fullscreen includes the entire game, so menus, results and the court stay together; Escape exits and resizes the game. If the browser blocks the automatic request, play continues normally and the title toggle can retry. Unsupported browsers keep the normal page view.
+The first mouse press, tap or Enter/Space activation anywhere in the game requests browser fullscreen on supported browsers. Requests run before the canvas handles the input and retry on a later gesture if rejected. Firefox and other browsers require a user gesture, so a fresh page load alone cannot force fullscreen. The title also has a Full screen / Exit full screen toggle. Fullscreen includes the entire game, so menus, results and the court stay together; Escape exits and resizes the game without automatically re-entering. Play continues normally if fullscreen is blocked or unsupported, and the title toggle remains available to retry where supported.
 
 ## Game flow
 
@@ -62,7 +62,7 @@ Run `node reference-game/match-stats.test.cjs` for checks covering title/Stats n
 
 These checks run against a simulated DOM and canvas. They do not verify live browser input, rendering, touch or audio playback. No browser was connected during implementation. Saved progress requires browser storage; when unavailable, the game supports the current session only.
 
-Run `node reference-game/fullscreen.test.cjs` for six checks covering immediate requests from clicks, the title controls, duplicate requests, exit/Escape resizing, WebKit support and blocked/unsupported fullscreen. Browser fullscreen APIs are simulated; a live browser check remains outstanding.
+Run `node reference-game/fullscreen.test.cjs` for ten checks covering immediate requests from captured mouse/touch/keyboard gestures, retries, existing activation at startup, the title controls, duplicate requests, exit/Escape resizing, WebKit support and blocked/unsupported fullscreen. Browser fullscreen APIs are simulated; a live Firefox check remains outstanding.
 
 ## Previous version
 

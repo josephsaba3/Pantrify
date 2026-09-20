@@ -119,7 +119,7 @@ async function boot(width, height, blockedStorage = false, memory = new Map()) {
   sandbox.window = sandbox.self = sandbox;
   const context = vm.createContext(sandbox);
   const scripts = [...read("index.html").toString().matchAll(/<script src="([^"]+)"/g)].map(match => match[1]);
-  for (const name of scripts) vm.runInContext(read(name).toString(), context, { filename: name });
+  for (const name of scripts) vm.runInContext(read(name.split("?")[0]).toString(), context, { filename: name });
   async function tick(step = 1000 / 60) {
     now += step;
     const queuedFrames = [...frames.values()];

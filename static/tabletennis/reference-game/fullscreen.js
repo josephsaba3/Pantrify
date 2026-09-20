@@ -7,6 +7,7 @@
   const supported = typeof request === "function" && typeof exit === "function" &&
     document.fullscreenEnabled !== false && document.webkitFullscreenEnabled !== false;
   let pending = false;
+  let autoEnter = true;
   const active = () => Boolean(document.fullscreenElement || document.webkitFullscreenElement);
   function sync() {
     for (const button of document.querySelectorAll('[data-action="fullscreen"]')) {
@@ -23,6 +24,7 @@
       // Fullscreen the document so the court, menus and results all stay visible.
       // Call immediately, before awaiting anything or starting the game's transitions.
       await (entering ? request.call(root) : exit.call(document));
+      if (entering) autoEnter = false;
       return true;
     } catch {
       if (reportFailure) {
@@ -36,6 +38,7 @@
     }
   }
   function changed() {
+    if (active()) autoEnter = false;
     sync();
     const message = document.querySelector('[data-fullscreen-status]');
     if (message) message.textContent = "";
@@ -44,5 +47,25 @@
   }
   document.addEventListener("fullscreenchange", changed);
   document.addEventListener("webkitfullscreenchange", changed);
-  window.GameFullscreen = { supported, sync, enter: () => change(true), toggle: () => change(!active(), true) };
+  function enter() { return autoEnter ? change(true) : Promise.resolve(false); }
+  function gesture(event) {
+    if (!event.isTrusted || event.ctrlKey || event.altKey || event.metaKey || event.button > 0) return;
+    if (event.type === "pointerdown" && event.pointerType !== "mouse") return;
+    if (event.type === "pointerup" && event.pointerType === "mouse") return;
+    if (event.type === "keydown" && (event.repeat || !["Enter", " "].includes(event.key))) return;
+    // The explicit toggle owns its gesture, otherwise entry could turn its
+    // following click into an exit. Leave links and editable controls alone.
+    if (event.target?.closest?.('[data-action="fullscreen"], a, input, textarea, select, [contenteditable="true"]')) return;
+    void enter();
+  }
+  // Capture genuine input before the copied game's canvas handlers consume it.
+  // Mouse presses activate immediately; touch/pen activate on release. Click
+  // also covers keyboard activation and browsers without pointer events.
+  for (const name of ["pointerdown", "pointerup", "touchend", "click", "keydown"]) {
+    document.addEventListener(name, gesture, { capture: true, passive: true });
+  }
+  window.GameFullscreen = { supported, sync, enter, toggle: () => change(!active(), true) };
+  // Use an existing gesture if one is still active; never request fullscreen
+  // from an unactivated page load, which Firefox must reject.
+  if (window.navigator?.userActivation?.isActive) void enter();
 })();
