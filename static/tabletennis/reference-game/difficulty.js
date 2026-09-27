@@ -3,21 +3,21 @@
   "use strict";
   const profiles = Object.freeze({
     easy: Object.freeze({ label: "Easy", description: "More time to react, gentler returns, and a forgiving opponent.",
-      skill: 0.36, reaction: 0.20, reactionVariation: 0.08, travel: 0.94, tracking: 1.0, movement: 460, recovery: 0.94,
+      skill: 0.36, reaction: 0.14, reactionVariation: 0.06, travel: 1.12, tracking: 1.18, movement: 540, recovery: 1.10,
       spread: 0.60, accuracyError: 0.22, pressureError: 0.26, placement: 0.30, paceCap: 0.46, spin: 0.36, spinChance: 0.36,
-      readjustAt: 0.10, mishitChance: 0.065, pressureMishit: 0.08 }),
+      readjustAt: 0.16, mishitChance: 0.065, pressureMishit: 0.08 }),
     medium: Object.freeze({ label: "Medium", description: "Quicker rallies, varied spin, and more accurate placement.",
-      skill: 0.70, reaction: 0.105, reactionVariation: 0.065, travel: 1.17, tracking: 1.28, movement: 650, recovery: 1.14,
+      skill: 0.70, reaction: 0.075, reactionVariation: 0.045, travel: 1.42, tracking: 1.48, movement: 740, recovery: 1.32,
       spread: 0.74, accuracyError: 0.125, pressureError: 0.18, placement: 0.65, paceCap: 0.53, spin: 0.65, spinChance: 0.64,
-      readjustAt: 0.20, mishitChance: 0.043, pressureMishit: 0.06 }),
+      readjustAt: 0.28, mishitChance: 0.043, pressureMishit: 0.06 }),
     challenging: Object.freeze({ label: "Challenging", description: "Sharper reactions and stronger spin, with room to recover.",
-      skill: 0.91, reaction: 0.055, reactionVariation: 0.045, travel: 1.40, tracking: 1.54, movement: 780, recovery: 1.34,
+      skill: 0.91, reaction: 0.025, reactionVariation: 0.025, travel: 1.78, tracking: 1.85, movement: 930, recovery: 1.58,
       spread: 0.85, accuracyError: 0.08, pressureError: 0.13, placement: 0.84, paceCap: 0.575, spin: 0.86, spinChance: 0.80,
-      readjustAt: 0.28, mishitChance: 0.030, pressureMishit: 0.045 }),
+      readjustAt: 0.38, mishitChance: 0.030, pressureMishit: 0.045 }),
     hard: Object.freeze({ label: "Hard", description: "Fast reactions, stronger spin, and returns into open space.",
-      skill: 0.99, reaction: 0.025, reactionVariation: 0.035, travel: 1.48, tracking: 1.65, movement: 840, recovery: 1.42,
+      skill: 0.99, reaction: 0.010, reactionVariation: 0.015, travel: 1.92, tracking: 2.02, movement: 1000, recovery: 1.72,
       spread: 0.89, accuracyError: 0.065, pressureError: 0.11, placement: 0.90, paceCap: 0.59, spin: 0.94, spinChance: 0.86,
-      readjustAt: 0.32, mishitChance: 0.024, pressureMishit: 0.035 })
+      readjustAt: 0.42, mishitChance: 0.024, pressureMishit: 0.035 })
   });
   const valid = id => Object.hasOwn(profiles, id);
   const clamp = (value, low, high) => Math.min(high, Math.max(low, value));
