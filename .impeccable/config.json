@@ -1,0 +1,26 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "design-system-color",
+        "value": "#0f0",
+        "createdAt": "2026-09-27T12:07:18.041Z",
+        "reason": "Claude: developer-only ?debug frame diagnostics HUD in tabletennis/reference-game/frame-debug.js, not player-facing UI"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgba(0,0,0,.7)",
+        "createdAt": "2026-09-27T12:07:18.120Z",
+        "reason": "Claude: developer-only ?debug frame diagnostics HUD in tabletennis/reference-game/frame-debug.js, not player-facing UI"
+      },
+      {
+        "rule": "design-system-radius",
+        "value": "4px",
+        "createdAt": "2026-09-27T12:07:18.191Z",
+        "reason": "Claude: developer-only ?debug frame diagnostics HUD in tabletennis/reference-game/frame-debug.js, not player-facing UI"
+      }
+    ]
+  }
+}
