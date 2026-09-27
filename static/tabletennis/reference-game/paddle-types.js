@@ -4,7 +4,7 @@
   const profiles = Object.freeze({
     balanced: Object.freeze({ label: "Balanced", color: "Green", description: "The original speed and spin.", sprite: "enemyBat2", enemyId: 2, speed: 1, spin: 1 }),
     spinny: Object.freeze({ label: "Spinny", color: "Red", description: "Easier spin from a sideways swipe.", sprite: "enemyBat4", enemyId: 4, speed: 1, spin: 1.05 }),
-    speedy: Object.freeze({ label: "Speedy", color: "Blue", description: "A little extra pace on your shots.", sprite: "enemyBat0", enemyId: 0, speed: 1.08, spin: 1 })
+    speedy: Object.freeze({ label: "Speedy", color: "Blue", description: "A little extra pace on your shots.", sprite: "enemyBat0", enemyId: 0, speed: 1.04, spin: 1 })
   });
   const ids = Object.keys(profiles);
   const valid = id => Object.hasOwn(profiles, id);

@@ -127,7 +127,7 @@ test("Spinny needs a gentler sideways swipe, preserves aim/pace, and caps the sp
   }
 });
 
-test("Speedy gives a bounded 8% pace bonus without changing spin or placement", async () => {
+test("Speedy gives a bounded 4% pace bonus without changing spin or placement", async () => {
   const h = await boot(1440, 900);
   await start(h);
   const c = h.context;
@@ -136,10 +136,19 @@ test("Speedy gives a bounded 8% pace bonus without changing spin or placement", 
     const normal = stroke(c, "balanced", 2400, forward).getHitData(0.3, 0.8);
     const fastPaddle = stroke(c, "speedy", 2400, forward);
     const speedy = fastPaddle.getHitData(0.3, 0.8);
-    close(speedy.speed, normal.speed * 1.08);
-    assert.ok(speedy.speed <= 0.648 + 1e-10);
+    close(speedy.speed, normal.speed * 1.04);
+    assert.ok(speedy.speed <= 0.624 + 1e-10);
     close(speedy.x, normal.x); close(speedy.y, normal.y); close(speedy.spin, normal.spin);
     assert.deepEqual(plain(fastPaddle.getHitData(0.3, 0.8)), plain(speedy), "Repeated shot lookup must not compound bonuses");
+    const velocity = shot => {
+      const ball = new c.Elements.Ball();
+      Object.assign(ball, { tablePosX: 0, tablePosY: 0.8, height: 60, lastHit: "user", servingState: serving, bounceNum: 0 });
+      ball.setBouncePoint(shot);
+      return Math.abs(ball.tableVY);
+    };
+    const normalVelocity = velocity(normal), speedyVelocity = velocity(speedy);
+    assert.ok(speedyVelocity > normalVelocity);
+    assert.ok(speedyVelocity <= normalVelocity * 1.065, "Even full-power Speedy shots must stay below a 6.5% actual velocity boost");
   }
 });
 
@@ -213,7 +222,7 @@ test("paddle bonuses reach actual ball velocity and curvature through the source
     assert.ok([c.ball.x, c.ball.y, c.ball.tablePosX, c.ball.tablePosY, c.ball.height].every(Number.isFinite));
   }
   assert.ok(outcomes.speedy.velocity > outcomes.balanced.velocity);
-  assert.ok(outcomes.speedy.velocity < outcomes.balanced.velocity * 1.14);
+  assert.ok(outcomes.speedy.velocity < outcomes.balanced.velocity * 1.065);
   close(outcomes.spinny.velocity, outcomes.balanced.velocity);
   assert.equal(outcomes.balanced.curve, 0);
   assert.equal(outcomes.speedy.curve, 0);
