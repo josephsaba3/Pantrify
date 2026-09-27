@@ -9,6 +9,9 @@
   let pending = false;
   let autoEnter = true;
   const active = () => Boolean(document.fullscreenElement || document.webkitFullscreenElement);
+  function status(text) {
+    for (const message of document.querySelectorAll('[data-fullscreen-status]')) message.textContent = text;
+  }
   function sync() {
     for (const button of document.querySelectorAll('[data-action="fullscreen"]')) {
       button.textContent = active() ? "Exit full screen" : "Full screen";
@@ -28,8 +31,7 @@
       return true;
     } catch {
       if (reportFailure) {
-        const message = document.querySelector('[data-fullscreen-status]');
-        if (message) message.textContent = "Full screen was blocked. Try again, or use your browser's fullscreen command.";
+        status("Full screen was blocked. Try again, or use your browser's fullscreen command.");
       }
       return false;
     } finally {
@@ -40,8 +42,7 @@
   function changed() {
     if (active()) autoEnter = false;
     sync();
-    const message = document.querySelector('[data-fullscreen-status]');
-    if (message) message.textContent = "";
+    status("");
     // Use the original game's resize path on both entry and Escape/exit.
     window.resizeCanvas?.();
   }

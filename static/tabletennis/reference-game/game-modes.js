@@ -7,7 +7,8 @@
   const handicap = window.HandicapChallenge;
   const stats = window.MatchStats;
   const modeNames = { world: "World mode", finals: "Finals system", handicap: "CPU Handicap" };
-  const original = { button: window.butEventHandler, complete: window.initGameComplete, frame: window.requestAnimFrame };
+  const original = { button: window.butEventHandler, complete: window.initGameComplete, frame: window.requestAnimFrame,
+    pause: window.initPause, resume: window.resumeGame };
   const screenFrames = new Set();
   window.requestAnimFrame = function(callback) {
     // The source can finish a match inside Ball.update, then queue one more
@@ -19,6 +20,38 @@
   };
   const flow = document.getElementById("mode-flow");
   const court = document.getElementById("canvas-wrapper");
+  const pauseControls = document.createElement("aside");
+  pauseControls.id = "pause-controls";
+  pauseControls.hidden = true;
+  pauseControls.setAttribute("aria-label", "Pause options");
+  const pauseFullscreen = document.createElement("button");
+  pauseFullscreen.className = "quiet-button";
+  pauseFullscreen.type = "button";
+  pauseFullscreen.setAttribute("data-action", "fullscreen");
+  pauseFullscreen.setAttribute("aria-pressed", "false");
+  pauseFullscreen.textContent = "Full screen";
+  const pauseStatus = document.createElement("p");
+  pauseStatus.className = "fullscreen-status";
+  pauseStatus.setAttribute("data-fullscreen-status", "");
+  pauseStatus.setAttribute("role", "status");
+  pauseStatus.setAttribute("aria-live", "polite");
+  pauseControls.appendChild(pauseFullscreen);
+  pauseControls.appendChild(pauseStatus);
+  document.body.appendChild(pauseControls);
+  pauseFullscreen.addEventListener("click", () => {
+    if (gameState === "pause") window.GameFullscreen.toggle();
+  });
+  window.initPause = function(...args) {
+    const result = original.pause.apply(this, args);
+    pauseStatus.textContent = "";
+    pauseControls.hidden = !window.GameFullscreen.supported;
+    window.GameFullscreen.sync();
+    return result;
+  };
+  window.resumeGame = function(...args) {
+    pauseControls.hidden = true;
+    return original.resume.apply(this, args);
+  };
   const countryNames = typeof Intl.DisplayNames === "function" ? new Intl.DisplayNames(["en"], { type: "region" }) : null;
   const names = { GB: "United Kingdom", KR: "South Korea", HK: "Hong Kong", TW: "Taiwan" };
   const escape = value => String(value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
@@ -67,6 +100,7 @@
     userInput.aHitAreas.length = 0;
   }
   function show(html, screen) {
+    pauseControls.hidden = true;
     stats.clearBanner();
     stopScreen();
     gameState = screen;
@@ -78,6 +112,7 @@
     flow.focus({ preventScroll: true });
   }
   function hide() {
+    pauseControls.hidden = true;
     flow.hidden = true;
     court.hidden = false;
     window.famobi.paused = false;
@@ -355,6 +390,7 @@
     return showTitle();
   };
   window.butEventHandler = function(id, data) {
+    if (["playFromPause", "restartFromPause", "quitFromPause"].includes(id)) pauseControls.hidden = true;
     if (["playFromStart", "playFromGameIntro"].includes(id)) window.GameFullscreen.enter();
     if (["playFromStart", "cupsFromStart", "changeCountryFromStart"].includes(id)) return chooseCountry();
     if (id === "countryChoice") {

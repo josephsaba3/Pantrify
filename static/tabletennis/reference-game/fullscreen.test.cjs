@@ -15,7 +15,7 @@ function setup({ webkit = false, enabled = true, fail = false, activated = false
   const elementKey = webkit ? "webkitFullscreenElement" : "fullscreenElement";
   const document = { documentElement: root, [elementKey]: null,
     [webkit ? "webkitFullscreenEnabled" : "fullscreenEnabled"]: enabled,
-    querySelectorAll: () => [button], querySelector: () => message,
+    querySelectorAll: selector => selector === '[data-fullscreen-status]' ? [message] : [button], querySelector: () => message,
     addEventListener(name, fn, options) { listeners.set(name, { fn, options }); }
   };
   root[webkit ? "webkitRequestFullscreen" : "requestFullscreen"] = function() {
