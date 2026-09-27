@@ -139,6 +139,8 @@ test("return pace, spin, and open-space placement increase while player controls
     const h = await boot(1440, 900);
     await start(h, "finals", level);
     const c = h.context, opponent = c.enemyBat;
+    // Compare difficulty alone; equipment bonuses are covered separately.
+    opponent.paddleType = "balanced";
     c.Math.random = rng(420);
     c.ball.servingState = 2;
     c.ball.x = opponent.x;

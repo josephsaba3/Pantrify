@@ -37,6 +37,20 @@
 .country-flag { display: block; width: 38px; height: 27px; flex: 0 0 38px; }
 .quiet-button { border: 1px solid var(--soft); padding: 10px 16px; min-height: 44px; color: var(--paper); background: var(--ink); border-radius: 8px; }
 .quiet-button:hover { background: #294775; }
+.paddle-picker { min-width: 0; max-width: 880px; margin: 28px auto 0; padding: 0; border: 0; }
+.paddle-picker legend { margin-bottom: 12px; padding: 0; font-size: 20px; font-weight: 750; }
+.paddle-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.paddle-option { position: relative; cursor: pointer; }
+.paddle-option input { position: absolute; z-index: 1; top: 12px; right: 12px; width: 18px; height: 18px; margin: 0; accent-color: var(--ink); cursor: pointer; }
+.paddle-choice { display: flex; align-items: center; gap: 12px; height: 100%; padding: 18px 36px 18px 14px; border: 2px solid var(--soft); border-radius: 12px; color: var(--ink); background: var(--paper); }
+.paddle-option:hover .paddle-choice { border-color: var(--gold); }
+.paddle-option input:checked + .paddle-choice { border-color: var(--gold); background: #fff7de; }
+.paddle-option input:focus-visible + .paddle-choice { outline: 3px solid var(--gold); outline-offset: 4px; }
+.paddle-art { display: block; flex: 0 0 42px; width: 42px; height: 70px; }
+.paddle-copy { display: grid; gap: 4px; }
+.paddle-copy strong { font-size: 18px; font-weight: 800; }
+.paddle-copy > span { font-size: 14px; }
+.paddle-note { color: var(--soft); font-size: 14px; }
 .mode-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; margin-top: 40px; }
 .mode-option { display: flex; flex-direction: column; align-items: center; gap: 22px; padding: 28px; border: 2px solid var(--soft); border-radius: 16px; color: var(--ink); background: var(--paper); text-align: center; }
 .mode-option:hover { border-color: var(--gold); background: #fff7de; }
@@ -144,6 +158,9 @@
 @media (max-width: 650px) {
   #mode-flow { padding: max(20px, env(safe-area-inset-top)) 16px max(20px, env(safe-area-inset-bottom)); }
   .mode-page { margin: 12px auto; }
+  .paddle-options { grid-template-columns: 1fr; gap: 8px; }
+  .paddle-choice { padding: 12px 40px 12px 14px; }
+  .paddle-art { flex-basis: 30px; width: 30px; height: 50px; }
   .difficulty-page { margin: 12px auto; }
   .difficulty-options { gap: 12px; margin-top: 24px; }
   .difficulty-option { flex-direction: column; align-items: stretch; padding: 18px; gap: 12px; }

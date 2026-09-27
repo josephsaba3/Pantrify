@@ -3,6 +3,7 @@
   "use strict";
   const tournament = window.FinalsTournament;
   const difficulty = window.MatchDifficulty;
+  const paddles = window.PaddleTypes;
   const handicap = window.HandicapChallenge;
   const stats = window.MatchStats;
   const modeNames = { world: "World mode", finals: "Finals system", handicap: "CPU Handicap" };
@@ -118,6 +119,7 @@
     const description = "32 countries. Five rounds. One champion.";
     show(`<div class="mode-page">
       <header class="mode-header"><h1>Choose game mode</h1><div class="chosen-country">${flag(oGameData.userId)}<strong>${escape(countryName(oGameData.userId))}</strong><button class="quiet-button" data-action="country">Change country</button></div></header>
+      ${paddlePicker()}
       <div class="mode-options">
         <button class="mode-option" data-action="world">${art("map")}<span class="mode-description"><strong>World mode</strong><span>Travel the world and work your way through the tour.</span><span class="option-action">Choose difficulty</span></span></button>
         <button class="mode-option" data-action="finals">${art("cup0")}<span class="mode-description"><strong>Finals system</strong><span>${description}</span><span class="option-action">Choose difficulty</span></span></button>
@@ -125,6 +127,12 @@
       </div>
       <button class="quiet-button mode-back" data-action="home">Back to title</button>
     </div>`, "modeSelect");
+  }
+  function paddlePicker() {
+    const source = assetLib.getData("gameElements");
+    return `<fieldset class="paddle-picker"><legend>Your paddle</legend><div class="paddle-options">${Object.entries(paddles.profiles).map(([id, profile]) =>
+      `<label class="paddle-option"><input type="radio" name="paddle" value="${id}"${paddles.selected === id ? " checked" : ""}><span class="paddle-choice">${imageCrop("gameElements.png", source.oData.oAtlasData[oImageIds[profile.sprite]], source.img.width, source.img.height, "paddle-art")}<span class="paddle-copy"><strong>${profile.label}</strong><span>${profile.color} · ${profile.description}</span></span></span></label>`
+    ).join("")}</div><p class="paddle-note">Opponents pick a random paddle each match and get its bonus too.</p></fieldset>`;
   }
   function showTitle() {
     stats.abandon();
@@ -367,6 +375,10 @@
     if (["tickFromTut", "playFromPause"].includes(id)) stats.announce();
     return result;
   };
+  flow.addEventListener("change", event => {
+    const input = event.target;
+    if (gameState === "modeSelect" && input.name === "paddle") paddles.select(input.value);
+  });
   flow.addEventListener("click", event => {
     const button = event.target.closest("button[data-action]");
     if (!button || !flow.contains(button)) return;

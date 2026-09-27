@@ -20,7 +20,11 @@ CPU Handicap is a five-stage comeback challenge. The player starts at 0 while th
 
 Easy, Medium, Challenging, and Hard vary only the opponent: reaction delay, movement and recovery speed, placement accuracy under pressure, tactical returns into open space, return pace, and spin. Easy leaves more time and room for mistakes. All four levels have stronger reaction, movement, recovery, placement, pace and spin settings; Challenging sits closer to Hard to soften the final step. Hard recovers and places the ball more effectively but has finite movement and shot-speed limits. Opponents correct their forecast after the bounce and brake near the ball. Every level can send occasional returns long or wide, more often when stretched and less often at higher levels; real missed shots feed the unforced-error statistic. A Finals draw keeps its difficulty across all rounds. World difficulty can be changed by returning through the mode selector, without resetting tour progress.
 
-Keep the copied game's player paddle movement, aiming, shot-speed cap, spin response, ball physics, and match rendering as the baseline. Matches retain first-to-11, win-by-two scoring and the source's 99-point cap.
+The mode chooser includes a saved paddle choice: Balanced (green) retains the original player physics, Spinny (red) makes sideways-swipe spin easier with a small increase in maximum spin, and Speedy (blue) adds a little shot pace. Balanced is the default. The choice applies in every mode and saves as `paddle:v1` within the local platform's namespace, with session-only fallback when browser storage is unavailable.
+
+Each new match, including every next opponent in Finals, independently gives the CPU one of the three paddles with equal probability and the corresponding bonus. Pause/resume preserves both paddles; restarting creates a new CPU paddle while keeping the player's selection. Equipment bonuses apply on top of the existing difficulty settings. The selector inherits the existing navy/gold and Archivo styling and uses the source paddle artwork. The source bundle and media remain unchanged.
+
+Keep the copied game's player paddle movement, aiming, ball physics, and match rendering as the baseline, with the selected paddle adjusting shot pace or spin. Matches retain first-to-11, win-by-two scoring and the source's 99-point cap.
 
 The source is the supplied `Downloads.zip`; missing media was restored from the same public game's CDN. Origin and hashes are recorded in `reference-game/source-manifest.json`. The original bundle and assets retain their source identity.
 
@@ -36,4 +40,4 @@ The custom Rally Eleven game remains available through `rally-eleven.html`, with
 
 ## Verification limits
 
-Source/media smoke and feature checks use a simulated DOM and canvas. They cover navigation, scoring and statistics, progression, persistence, unfinished-match handling and storage fallback. Live browser input, rendering, touch and audio remain unverified because no browser was connected.
+Source/media smoke and feature checks use a simulated DOM and canvas. They cover navigation, scoring and statistics, progression, persistence, unfinished-match handling and storage fallback, plus paddle selection, source-stroke consistency, bonuses reaching ball physics and independent CPU choices through all five Finals rounds. Live browser input, rendering, touch and audio remain unverified because no browser was connected.
