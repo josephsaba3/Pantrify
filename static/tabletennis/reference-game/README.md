@@ -33,6 +33,8 @@ The player choice saves as `paddle:v1` within the local platform's namespace and
 
 `local-platform.js` provides the host integration the game expects: viewport dimensions, local saves, ready callbacks, and resolved analytics callbacks. The copied portal's advertising and tracking scripts are not loaded. Saves use a separate local prefix. The Famobi branding in the original assets is retained.
 
+The title and pause screen offer a shared Full screen / Exit full screen toggle when the browser supports it. The pause control sits at the top right above the original canvas menu, keeps the match paused when toggled, and disappears on resume, restart or quit. Both controls follow browser fullscreen changes, including Escape, and show a retry message if a request is blocked.
+
 To begin changes, edit `game.js` or add a separate script after it. The untouched source remains under `supplied/`. `restore-assets.ps1` restores media without replacing an edited `game.js`.
 
 `match-stats.js` hooks startup, serves, shots and scoring to count points won, aces, serve/return points, net/out unforced errors and match points saved for both sides, plus longest and average rally length in returns. The rally average divides total returns by actual points played; all-time averages are weighted across recorded points. An ace is a legal serve the receiver does not touch. Missed returns are excluded from unforced errors. A match point saved is a point won while the opponent could win the match. A status banner names who holds match points and how many remain for up to four seconds between points, clearing when the serve starts, on pause or on exit. Counts respect deuce and the 99-point cap.
@@ -49,6 +51,7 @@ node reference-game/smash-defense.test.cjs
 node reference-game/paddle-types.test.cjs
 node reference-game/handicap.test.cjs
 node reference-game/match-stats.test.cjs
+node reference-game/fullscreen.test.cjs
 ```
 
 The match-stats checks cover navigation, scoring categories, aces and legacy-save compatibility, rally statistics, announcement timing, saved match points, cumulative totals, Handicap exclusions, unfinished attempts, storage fallback and World continuation. These verify the actual copied JavaScript in a simulated DOM/canvas, not a browser playtest. The first check also verifies bundle/media hashes and source sprite bounds. The 12 finals checks cover all five rounds, elimination, persistence, World isolation, pause/restart/quit, and one match loop after an immediate round transition. The 11 difficulty checks cover all four levels in World, Finals, and CPU Handicap, saved-level separation/migration, bounded motion and shots, player-stroke consistency, and reaction timing across frame rates. A seeded 405-shot contact scenario includes displaced starting paddles, both spin directions and faster/wider shots; it produces increasing opponent return coverage. CPU mishit checks cover ordinary/stretched error frequency and actual ball flights that lose points and record errors. These checks do not measure human win rates. The 11 handicap checks cover actual scores through all five stages, loss/retry, deuce, pause/restart/quit, save isolation, failed storage, completion, and next-stage loop handling.

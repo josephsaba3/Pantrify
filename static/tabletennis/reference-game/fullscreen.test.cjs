@@ -163,3 +163,113 @@ test("the real title Play and fullscreen buttons call the controller before game
   assert.deepEqual(calls, [["toggle", "title"], ["enter", "title"]]);
   assert.equal(h.context.gameState, "chooseCountry");
 });
+
+function pauseElements(h) {
+  const controls = h.context.document.body.children.find(node => node.id === "pause-controls");
+  assert.ok(controls);
+  return { controls, button: controls.children[0], message: controls.children[1] };
+}
+function connectFullscreen(h, fail = false) {
+  const c = h.context, document = c.document, elements = pauseElements(h);
+  const listeners = new Map(), calls = [];
+  const titleButton = { setAttribute(key, value) { this[key] = value; } }, titleMessage = {};
+  document.addEventListener = (name, callback) => listeners.set(name, callback);
+  document.querySelectorAll = selector => selector === '[data-fullscreen-status]'
+    ? [titleMessage, elements.message] : [titleButton, elements.button];
+  document.documentElement.requestFullscreen = () => {
+    calls.push("enter");
+    if (fail) return Promise.reject(new Error("NotAllowedError"));
+    document.fullscreenElement = document.documentElement;
+    listeners.get("fullscreenchange")();
+    return Promise.resolve();
+  };
+  document.exitFullscreen = () => {
+    calls.push("exit");
+    document.fullscreenElement = null;
+    listeners.get("fullscreenchange")();
+    return Promise.resolve();
+  };
+  vm.runInContext(source, c);
+  return { ...elements, calls, titleButton, titleMessage };
+}
+async function startMatch(h, mode) {
+  const c = h.context;
+  c.butEventHandler("playFromStart", {});
+  c.butEventHandler("countryChoice", { id: 0 });
+  h.click(mode);
+  h.click("difficulty", { level: "medium" });
+  if (mode === "world") {
+    c.butEventHandler("playFromMap", {});
+    c.butEventHandler("playFromGameIntro", {});
+  } else h.click(mode === "finals" ? "play-final" : "play-handicap");
+  await h.ticks(4);
+  if (c.firstRun) c.butEventHandler("tickFromTut", {});
+  assert.equal(c.gameState, "game");
+}
+
+test("pause fullscreen enters/exits without resuming, and disappears on resume/restart/quit in every mode", async () => {
+  for (const size of [[1440, 900], [390, 844], [844, 390]]) for (const mode of ["world", "finals", "handicap"]) {
+    const h = await boot(...size), c = h.context;
+    await startMatch(h, mode);
+    const ui = connectFullscreen(h);
+    assert.equal(ui.controls.hidden, true);
+    c.initPause();
+    const ball = c.ball, score = [c.oGameData.userScore, c.oGameData.enemyScore];
+    assert.equal(ui.controls.hidden, false);
+    assert.equal(ui.button.textContent, "Full screen");
+    assert.equal(h.flow.hidden, true, "The original canvas pause menu stays visible");
+    ui.button.listeners.get("click")();
+    assert.deepEqual(ui.calls, ["enter"], "Fullscreen must be requested during the click");
+    await settle();
+    assert.equal(ui.button.textContent, "Exit full screen");
+    assert.equal(ui.titleButton.textContent, "Exit full screen", "All toggles share the current state");
+    assert.equal(ui.button["aria-pressed"], "true");
+    await h.ticks(4);
+    assert.equal(c.gameState, "pause");
+    ui.button.listeners.get("click")();
+    await settle();
+    assert.deepEqual(ui.calls, ["enter", "exit"]);
+    assert.equal(ui.button.textContent, "Full screen");
+    assert.equal(c.gameState, "pause");
+    assert.equal(c.ball, ball);
+    assert.deepEqual([c.oGameData.userScore, c.oGameData.enemyScore], score);
+    for (const action of ["playFromPause", "restartFromPause", "quitFromPause"]) {
+      c.butEventHandler(action, {});
+      assert.equal(ui.controls.hidden, true, action);
+      await h.ticks(4);
+      if (action !== "quitFromPause") {
+        assert.equal(c.gameState, "game");
+        c.initPause();
+        assert.equal(ui.controls.hidden, false);
+      }
+    }
+  }
+});
+
+test("pause fullscreen reports blocked requests on the visible pause screen and preserves the match", async () => {
+  const h = await boot(390, 844), c = h.context;
+  await startMatch(h, "finals");
+  const ui = connectFullscreen(h, true);
+  c.initPause();
+  ui.button.listeners.get("click")();
+  await settle();
+  assert.equal(c.gameState, "pause");
+  assert.equal(ui.controls.hidden, false);
+  assert.equal(ui.button.disabled, false);
+  assert.equal(ui.button.textContent, "Full screen");
+  assert.match(ui.message.textContent, /Full screen was blocked/);
+  assert.equal(ui.titleMessage.textContent, ui.message.textContent);
+  c.butEventHandler("playFromPause", {});
+  assert.equal(c.gameState, "game");
+  assert.equal(ui.controls.hidden, true);
+});
+
+test("unsupported browsers retain the original pause menu without an unusable toggle", async () => {
+  const h = await boot(390, 844);
+  await startMatch(h, "world");
+  h.context.initPause();
+  assert.equal(h.context.gameState, "pause");
+  assert.equal(pauseElements(h).controls.hidden, true);
+  h.context.butEventHandler("playFromPause", {});
+  assert.equal(h.context.gameState, "game");
+});
