@@ -15,6 +15,7 @@ from psycopg.rows import dict_row
 
 ROOT = Path(__file__).resolve().parent
 DATABASE_URL = os.environ.get("DATABASE_URL")
+mimetypes.add_type("application/manifest+json", ".webmanifest")
 DEFAULT_CATEGORIES = (("Staples", "#8569C8"), ("Fruit & Vege", "#4EA960"), ("Snacks", "#D69B1F"), ("Household", "#CC5757"), ("Drinks", "#59A7CC"))
 
 
@@ -165,7 +166,7 @@ class Handler(BaseHTTPRequestHandler):
         length = int(self.headers.get("Content-Length", "0"))
         return json.loads(self.rfile.read(length) or b"{}")
 
-    def serve_file(self, relative: str, directory: str = ".") -> None:
+    def serve_file(self, relative: str, directory: str = ".", cache_control: str | None = None) -> None:
         root = (ROOT / directory).resolve()
         path = (root / relative).resolve()
         if root not in path.parents or not path.is_file():
@@ -175,6 +176,8 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(HTTPStatus.OK)
         self.send_header("Content-Type", mimetypes.guess_type(path.name)[0] or "application/octet-stream")
         self.send_header("Content-Length", str(len(body)))
+        if cache_control:
+            self.send_header("Cache-Control", cache_control)
         self.end_headers()
         self.wfile.write(body)
 
@@ -185,6 +188,8 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json(state())
         elif path in ("/", "/index.html"):
             self.serve_file("static/index.html")
+        elif path == "/sw.js":
+            self.serve_file("static/sw.js", cache_control="no-cache")
         elif path == "/tabletennis":
             location = "/tabletennis/" + (f"?{request.query}" if request.query else "")
             self.send_response(HTTPStatus.PERMANENT_REDIRECT)
