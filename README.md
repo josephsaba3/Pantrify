@@ -12,6 +12,10 @@ Open `http://localhost:8000`. To share it with a partner on the same Wi-Fi, find
 
 PostgreSQL is required. Set `DATABASE_URL` before starting the app.
 
+## Install on Android
+
+Pantrify is an installable web app (PWA). Open the deployed HTTPS address in Chrome on Android, then tap **⋮ → Add to Home screen / Install app**. It opens full-screen with its own icon, refreshes as soon as you switch back to it, and shows the last loaded list when the shop has no signal (changes still need a connection). Installing requires HTTPS, so use the Railway URL rather than the local Wi-Fi address.
+
 ## PostgreSQL on Railway
 
 Add a `DATABASE_URL` reference variable to the Pantrify service using `${{Postgres.DATABASE_URL}}` (adjust `Postgres` if the database service has another name). Railway installs the driver from `requirements.txt` during deployment.
