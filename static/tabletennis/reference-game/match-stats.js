@@ -3,7 +3,8 @@
   "use strict";
   const KEY = "player-stats:v1";
   const fields = ["pointsWon", "aces", "servePointsWon", "returnPointsWon", "unforcedErrors", "matchPointsSaved"];
-  const side = () => Object.fromEntries(fields.map(key => [key, 0]));
+  // Streaks are a per-match maximum, so they are kept beside the summed fields.
+  const side = () => ({ ...Object.fromEntries(fields.map(key => [key, 0])), longestStreak: 0 });
   const empty = () => ({ version: 1, matches: 0, wins: 0, losses: 0, player: side(), opponent: side(), longestRally: 0, totalRallyHits: 0, ralliesTracked: 0 });
   const clone = value => JSON.parse(JSON.stringify(value));
   const integer = value => Number.isSafeInteger(value) && value >= 0;
@@ -14,8 +15,10 @@
       for (const team of [data.player, data.opponent]) {
         // Keep existing match history; aces cannot be reconstructed from old totals.
         if (team && team.aces === undefined) team.aces = 0;
+        if (team && team.longestStreak === undefined) team.longestStreak = 0;
         if (!team || !fields.every(key => integer(team[key])) || team.servePointsWon + team.returnPointsWon !== team.pointsWon) return empty();
         if (team.aces > team.servePointsWon) return empty();
+        if (!integer(team.longestStreak) || team.longestStreak > team.pointsWon) return empty();
       }
       // Earlier stats records did not retain rally totals. Preserve those
       // matches, and average only the points whose rally length is known.
@@ -77,7 +80,7 @@
   function begin() {
     clearBanner();
     completed = null;
-    current = { player: side(), opponent: side(), longestRally: 0, totalRallyHits: 0, ralliesTracked: 0,
+    current = { player: side(), opponent: side(), longestRally: 0, totalRallyHits: 0, ralliesTracked: 0, streakSide: null, streakLength: 0,
       playerId: oGameData.userId, opponentId: oGameData.enemyId,
       mode: window.TableTennisModes?.mode ?? "world", difficulty: window.MatchDifficulty.selected,
       startingScore: [oGameData.userScore, oGameData.enemyScore] };
@@ -93,6 +96,9 @@
     if (matchPoints(oGameData.userScore, oGameData.enemyScore)[other]) team.matchPointsSaved++;
     const error = errorSide(ball, winner);
     if (error) current[error === "user" ? "player" : "opponent"].unforcedErrors++;
+    current.streakLength = current.streakSide === key ? current.streakLength + 1 : 1;
+    current.streakSide = key;
+    team.longestStreak = Math.max(team.longestStreak, current.streakLength);
     const hits = Math.max(0, window.rallyHits || 0);
     // A legal serve bounces on both halves before the receiver can touch it.
     // A return (even one hit out) ends the ace opportunity.
@@ -108,7 +114,10 @@
     const totals = restore(window.famobi.localStorage.getItem(KEY));
     totals.matches++;
     totals[completed.won ? "wins" : "losses"]++;
-    for (const team of ["player", "opponent"]) for (const field of fields) totals[team][field] += completed[team][field];
+    for (const team of ["player", "opponent"]) {
+      for (const field of fields) totals[team][field] += completed[team][field];
+      totals[team].longestStreak = Math.max(totals[team].longestStreak, completed[team].longestStreak);
+    }
     totals.longestRally = Math.max(totals.longestRally, completed.longestRally);
     totals.totalRallyHits += completed.totalRallyHits;
     totals.ralliesTracked += completed.ralliesTracked;

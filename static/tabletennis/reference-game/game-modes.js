@@ -183,13 +183,13 @@
     window.GameFullscreen.sync();
     window.famobi.gameReady();
   }
-  const statRows = [["pointsWon", "Points won"], ["aces", "Aces"], ["servePointsWon", "Points won on serve"], ["returnPointsWon", "Points won on return"], ["unforcedErrors", "Unforced errors"], ["matchPointsSaved", "Match points saved"]];
+  const statRows = [["pointsWon", "Points won"], ["aces", "Aces"], ["servePointsWon", "Points won on serve"], ["returnPointsWon", "Points won on return"], ["unforcedErrors", "Unforced errors"], ["matchPointsSaved", "Match points saved"], ["longestStreak", "Longest point streak"]];
   const number = value => value.toLocaleString("en");
   function statsTable(data, opponentLabel) {
     return `<table class="stats-table"><caption class="stats-sr-only">${opponentLabel === "Opponents" ? "All-time" : "Match"} statistics comparison</caption><thead><tr><th scope="col">Statistic</th><th scope="col">You</th><th scope="col">${opponentLabel}</th></tr></thead><tbody>${statRows.map(([key, label]) => `<tr><th scope="row">${label}</th><td>${number(data.player[key])}</td><td>${number(data.opponent[key])}</td></tr>`).join("")}</tbody></table>`;
   }
   function statsNote() {
-    return '<p class="stats-note">An ace is a legal serve the receiver does not touch. Unforced errors count shots hit into the net or out. A missed return is not an unforced error. Rally length counts returns per point, excluding the serve.</p>';
+    return '<p class="stats-note">An ace is a legal serve the receiver does not touch. Unforced errors count shots hit into the net or out. A missed return is not an unforced error. Rally length counts returns per point, excluding the serve. A point streak is the most points won in a row in one match.</p>';
   }
   function rallySummary(data) {
     const average = data.ralliesTracked ? `${(data.totalRallyHits / data.ralliesTracked).toFixed(1)} returns` : "\u2014";
@@ -202,7 +202,7 @@
       ${totals.matches ? "" : '<p class="stats-empty">No completed matches yet. Finish a match to start your record.</p>'}
       <dl class="stats-record"><div><dt>Matches played</dt><dd>${number(totals.matches)}</dd></div><div><dt>Won</dt><dd>${number(totals.wins)}</dd></div><div><dt>Lost</dt><dd>${number(totals.losses)}</dd></div><div><dt>Win rate</dt><dd>${totals.matches ? `${Math.round(100 * totals.wins / totals.matches)}%` : "\u2014"}</dd></div></dl>
       ${statsTable(totals, "Opponents")}${rallySummary(totals)}${statsNote()}
-      <p class="stats-note">Stats save in this browser. Aces count from when ace tracking was added. Restarted or unfinished matches and CPU head starts are excluded.</p>
+      <p class="stats-note">Stats save in this browser. Aces and point streaks count from when their tracking was added. Restarted or unfinished matches and CPU head starts are excluded.</p>
       <button class="play-button stats-play" data-action="play">Play</button>
     </div>`, "playerStats");
   }

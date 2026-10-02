@@ -249,6 +249,57 @@ test("older totals keep their history when aces are added and invalid ace counts
   }
 });
 
+test("longest point streaks track consecutive points per side, excluding handicap head starts", async () => {
+  const memory = new Map(), h = await boot(390, 844, false, memory);
+  await launch(h, "world");
+  for (const winner of ["user", "user", "enemy", "enemy", "enemy", "user", "enemy"]) point(h, winner);
+  assert.equal(h.context.MatchStats.current.player.longestStreak, 2);
+  assert.equal(h.context.MatchStats.current.opponent.longestStreak, 3);
+  await finish(h); // Eight unanswered points finish the match at 11-4.
+  const result = h.context.MatchStats.completed;
+  assert.deepEqual(plain(result.score), [11, 4]);
+  assert.equal(result.player.longestStreak, 8);
+  assert.equal(result.opponent.longestStreak, 3);
+  assert.match(h.flow.innerHTML, /<th scope="row">Longest point streak<\/th><td>8<\/td><td>3<\/td>/);
+  // All-time keeps each side's best single-match streak rather than a sum.
+  await launch(h, "finals");
+  for (const winner of ["enemy", "enemy", "enemy", "enemy", "enemy", "user"]) point(h, winner);
+  await finish(h);
+  let total = plain(h.context.MatchStats.totals);
+  assert.equal(total.player.longestStreak, 11); // The closing user point starts the 11-point run.
+  assert.equal(total.opponent.longestStreak, 5);
+  // CPU head-start points are never played, so they cannot form a streak.
+  await launch(h, "handicap");
+  await finish(h);
+  assert.equal(h.context.MatchStats.completed.opponent.longestStreak, 0);
+  const reload = await boot(390, 844, false, memory);
+  reload.click("stats");
+  assert.match(reload.flow.innerHTML, /<th scope="row">Longest point streak<\/th><td>11<\/td><td>5<\/td>/);
+  // A restarted match starts its streak count again.
+  await launch(reload, "world");
+  point(reload, "user"); point(reload, "user");
+  await launch(reload, "world");
+  point(reload, "user");
+  assert.equal(reload.context.MatchStats.current.player.longestStreak, 1);
+});
+
+test("older totals without point streaks keep their history and invalid streaks are rejected", async () => {
+  const h = await boot(390, 844);
+  await launch(h, "world"); await finish(h);
+  const saved = plain(h.context.MatchStats.totals);
+  const legacy = plain(saved);
+  delete legacy.player.longestStreak; delete legacy.opponent.longestStreak;
+  h.context.famobi.localStorage.setItem("player-stats:v1", JSON.stringify(legacy));
+  const restored = plain(h.context.MatchStats.totals);
+  assert.equal(restored.matches, 1);
+  assert.equal(restored.player.longestStreak, 0);
+  assert.equal(restored.player.pointsWon, saved.player.pointsWon);
+  for (const value of [-1, 1.5, saved.player.pointsWon + 1]) {
+    h.context.famobi.localStorage.setItem("player-stats:v1", JSON.stringify({ ...saved, player: { ...saved.player, longestStreak: value } }));
+    assert.equal(h.context.MatchStats.totals.matches, 0, String(value));
+  }
+});
+
 test("all-time totals combine modes, countries and difficulties, and survive reload", async () => {
   const memory = new Map(), h = await boot(1440, 900, false, memory);
   await launch(h, "world", "easy"); await finish(h);
