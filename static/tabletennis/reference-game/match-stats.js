@@ -5,7 +5,10 @@
   const fields = ["pointsWon", "aces", "servePointsWon", "returnPointsWon", "unforcedErrors", "matchPointsSaved"];
   // Streaks are a per-match maximum, so they are kept beside the summed fields.
   const side = () => ({ ...Object.fromEntries(fields.map(key => [key, 0])), longestStreak: 0 });
-  const empty = () => ({ version: 1, matches: 0, wins: 0, losses: 0, player: side(), opponent: side(), longestRally: 0, totalRallyHits: 0, ralliesTracked: 0 });
+  // All-time teams also hold match streaks; the open runs let streaks continue into the next match.
+  const totalSide = () => ({ ...side(), longestMatchStreak: 0 });
+  const noRun = () => ({ side: null, length: 0 });
+  const empty = () => ({ version: 1, matches: 0, wins: 0, losses: 0, player: totalSide(), opponent: totalSide(), longestRally: 0, totalRallyHits: 0, ralliesTracked: 0, pointRun: noRun(), matchRun: noRun() });
   const clone = value => JSON.parse(JSON.stringify(value));
   const integer = value => Number.isSafeInteger(value) && value >= 0;
   function restore(raw) {
@@ -16,9 +19,10 @@
         // Keep existing match history; aces cannot be reconstructed from old totals.
         if (team && team.aces === undefined) team.aces = 0;
         if (team && team.longestStreak === undefined) team.longestStreak = 0;
+        if (team && team.longestMatchStreak === undefined) team.longestMatchStreak = 0;
         if (!team || !fields.every(key => integer(team[key])) || team.servePointsWon + team.returnPointsWon !== team.pointsWon) return empty();
         if (team.aces > team.servePointsWon) return empty();
-        if (!integer(team.longestStreak) || team.longestStreak > team.pointsWon) return empty();
+        if (!integer(team.longestStreak) || team.longestStreak > team.pointsWon || !integer(team.longestMatchStreak)) return empty();
       }
       // Earlier stats records did not retain rally totals. Preserve those
       // matches, and average only the points whose rally length is known.
@@ -26,6 +30,13 @@
         data.totalRallyHits = 0;
         data.ralliesTracked = 0;
       }
+      if (data.player.longestMatchStreak > data.wins || data.opponent.longestMatchStreak > data.losses) return empty();
+      // Saves from before cross-match streaks start with no open run.
+      data.pointRun ??= noRun();
+      data.matchRun ??= noRun();
+      const validRun = (run, best) => run?.side === null ? run.length === 0
+        : ["player", "opponent"].includes(run?.side) && integer(run.length) && run.length >= 1 && run.length <= data[run.side][best];
+      if (!validRun(data.pointRun, "longestStreak") || !validRun(data.matchRun, "longestMatchStreak")) return empty();
       if (![data.totalRallyHits, data.ralliesTracked].every(integer) ||
         data.ralliesTracked > data.player.pointsWon + data.opponent.pointsWon ||
         (data.ralliesTracked === 0 && data.totalRallyHits !== 0)) return empty();
@@ -80,7 +91,7 @@
   function begin() {
     clearBanner();
     completed = null;
-    current = { player: side(), opponent: side(), longestRally: 0, totalRallyHits: 0, ralliesTracked: 0, streakSide: null, streakLength: 0,
+    current = { player: side(), opponent: side(), longestRally: 0, totalRallyHits: 0, ralliesTracked: 0, streakSide: null, streakLength: 0, openingSide: null, openingLength: 0, openingOpen: true,
       playerId: oGameData.userId, opponentId: oGameData.enemyId,
       mode: window.TableTennisModes?.mode ?? "world", difficulty: window.MatchDifficulty.selected,
       startingScore: [oGameData.userScore, oGameData.enemyScore] };
@@ -96,8 +107,12 @@
     if (matchPoints(oGameData.userScore, oGameData.enemyScore)[other]) team.matchPointsSaved++;
     const error = errorSide(ball, winner);
     if (error) current[error === "user" ? "player" : "opponent"].unforcedErrors++;
+    // The opening run can join the previous match's closing run in the all-time totals.
+    if (current.streakSide === null) current.openingSide = key;
+    else if (current.streakSide !== key) current.openingOpen = false;
     current.streakLength = current.streakSide === key ? current.streakLength + 1 : 1;
     current.streakSide = key;
+    if (current.openingOpen) current.openingLength = current.streakLength;
     team.longestStreak = Math.max(team.longestStreak, current.streakLength);
     const hits = Math.max(0, window.rallyHits || 0);
     // A legal serve bounces on both halves before the receiver can touch it.
@@ -118,6 +133,17 @@
       for (const field of fields) totals[team][field] += completed[team][field];
       totals[team].longestStreak = Math.max(totals[team].longestStreak, completed[team].longestStreak);
     }
+    const run = totals.pointRun;
+    const joins = run.side !== null && run.side === completed.openingSide;
+    if (joins) totals[run.side].longestStreak = Math.max(totals[run.side].longestStreak, run.length + completed.openingLength);
+    if (completed.streakSide) {
+      // An unbroken match extends the open run rather than replacing it.
+      const unbroken = completed.openingOpen && joins;
+      totals.pointRun = { side: completed.streakSide, length: completed.streakLength + (unbroken ? run.length : 0) };
+    }
+    const winner = completed.won ? "player" : "opponent";
+    totals.matchRun = { side: winner, length: totals.matchRun.side === winner ? totals.matchRun.length + 1 : 1 };
+    totals[winner].longestMatchStreak = Math.max(totals[winner].longestMatchStreak, totals.matchRun.length);
     totals.longestRally = Math.max(totals.longestRally, completed.longestRally);
     totals.totalRallyHits += completed.totalRallyHits;
     totals.ralliesTracked += completed.ralliesTracked;
