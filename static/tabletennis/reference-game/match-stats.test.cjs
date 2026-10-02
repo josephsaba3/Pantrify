@@ -272,9 +272,11 @@ test("longest point streaks track consecutive points per side, excluding handica
   await launch(h, "handicap");
   await finish(h);
   assert.equal(h.context.MatchStats.completed.opponent.longestStreak, 0);
+  assert.equal(h.context.MatchStats.completed.player.longestStreak, 11, "The match screen stays per match");
   const reload = await boot(390, 844, false, memory);
   reload.click("stats");
-  assert.match(reload.flow.innerHTML, /<th scope="row">Longest point streak<\/th><td>11<\/td><td>5<\/td>/);
+  // The finals win closed on 11 straight points and the handicap win opened with 11 more.
+  assert.match(reload.flow.innerHTML, /<th scope="row">Longest point streak<\/th><td>22<\/td><td>5<\/td>/);
   // A restarted match starts its streak count again.
   await launch(reload, "world");
   point(reload, "user"); point(reload, "user");
@@ -283,20 +285,76 @@ test("longest point streaks track consecutive points per side, excluding handica
   assert.equal(reload.context.MatchStats.current.player.longestStreak, 1);
 });
 
+test("all-time point streaks join across matches only when the same side keeps scoring", async () => {
+  const h = await boot(390, 844);
+  await launch(h, "world");
+  for (let n = 0; n < 10; n++) point(h, "enemy");
+  for (let n = 0; n < 4; n++) point(h, "user");
+  await finish(h, "enemy"); // 4-11: the opponent closes on one point.
+  let total = plain(h.context.MatchStats.totals);
+  assert.deepEqual(total.pointRun, { side: "opponent", length: 1 });
+  await launch(h, "finals");
+  for (let n = 0; n < 3; n++) point(h, "enemy");
+  point(h, "user");
+  await finish(h);
+  total = plain(h.context.MatchStats.totals);
+  assert.equal(total.opponent.longestStreak, 10, "1 + 3 joins but stays below the first match's 10");
+  assert.equal(total.player.longestStreak, 11);
+  assert.deepEqual(total.pointRun, { side: "player", length: 11 });
+  await launch(h, "finals");
+  point(h, "enemy"); // Breaks the open run before the user can extend it.
+  await finish(h);
+  total = plain(h.context.MatchStats.totals);
+  assert.equal(total.player.longestStreak, 11);
+  assert.deepEqual(total.pointRun, { side: "player", length: 11 });
+});
+
+test("match streaks count consecutive wins and losses on the Stats screen only", async () => {
+  const memory = new Map(), h = await boot(390, 844, false, memory);
+  for (const winner of ["user", "user", "enemy", "enemy", "enemy", "user"]) {
+    await launch(h, "world"); await finish(h, winner); // A finals loss would end the draw.
+    assert.doesNotMatch(h.flow.innerHTML, /Longest match streak/);
+  }
+  const total = plain(h.context.MatchStats.totals);
+  assert.equal(total.player.longestMatchStreak, 2);
+  assert.equal(total.opponent.longestMatchStreak, 3);
+  assert.deepEqual(total.matchRun, { side: "player", length: 1 });
+  // Unfinished attempts neither extend nor break a match streak.
+  await launch(h, "world"); point(h, "enemy");
+  const reload = await boot(390, 844, false, memory);
+  reload.click("stats");
+  assert.match(reload.flow.innerHTML, /<th scope="row">Longest match streak<\/th><td>2<\/td><td>3<\/td>/);
+  assert.match(reload.flow.innerHTML, /Point streaks carry over/);
+  assert.deepEqual(plain(reload.context.MatchStats.totals.matchRun), { side: "player", length: 1 });
+});
+
 test("older totals without point streaks keep their history and invalid streaks are rejected", async () => {
   const h = await boot(390, 844);
   await launch(h, "world"); await finish(h);
   const saved = plain(h.context.MatchStats.totals);
   const legacy = plain(saved);
-  delete legacy.player.longestStreak; delete legacy.opponent.longestStreak;
+  for (const team of [legacy.player, legacy.opponent]) { delete team.longestStreak; delete team.longestMatchStreak; }
+  delete legacy.pointRun; delete legacy.matchRun;
   h.context.famobi.localStorage.setItem("player-stats:v1", JSON.stringify(legacy));
   const restored = plain(h.context.MatchStats.totals);
   assert.equal(restored.matches, 1);
   assert.equal(restored.player.longestStreak, 0);
+  assert.equal(restored.player.longestMatchStreak, 0);
+  assert.deepEqual(restored.pointRun, { side: null, length: 0 });
+  assert.deepEqual(restored.matchRun, { side: null, length: 0 });
   assert.equal(restored.player.pointsWon, saved.player.pointsWon);
   for (const value of [-1, 1.5, saved.player.pointsWon + 1]) {
     h.context.famobi.localStorage.setItem("player-stats:v1", JSON.stringify({ ...saved, player: { ...saved.player, longestStreak: value } }));
     assert.equal(h.context.MatchStats.totals.matches, 0, String(value));
+  }
+  for (const broken of [
+    { player: { ...saved.player, longestMatchStreak: 2 } },
+    { matchRun: { side: "player", length: 2 } },
+    { pointRun: { side: "player", length: 0 } },
+    { pointRun: { side: "nobody", length: 1 } }
+  ]) {
+    h.context.famobi.localStorage.setItem("player-stats:v1", JSON.stringify({ ...saved, ...broken }));
+    assert.equal(h.context.MatchStats.totals.matches, 0, JSON.stringify(broken));
   }
 });
 
