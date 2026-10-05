@@ -216,3 +216,4 @@
   .title-actions { grid-template-columns: 1fr 1fr; width: 340px; }
   .title-actions [data-action="fullscreen"] { grid-column: 1 / -1; }
 }
+.endurance-score { grid-template-columns: 1fr; }
