@@ -44,6 +44,9 @@
     } catch { return empty(); }
   }
   const wins = (a, b) => (a >= 11 && a - b >= 2) || a === 99;
+  // Endurance runs end on the first lost point, or at the source's 99-point cap.
+  const endurance = () => current?.mode === "endurance";
+  const enduranceOver = (player, opponent) => opponent >= 1 || player === 99;
   function matchPoints(player, opponent) {
     if (wins(player, opponent) || wins(opponent, player)) return { user: 0, enemy: 0 };
     const count = (a, b) => wins(a + 1, b) ? Math.max(1, a - b) : 0;
@@ -74,7 +77,7 @@
     bannerKey = "";
   }
   function announce() {
-    if (!current || gameState !== "game" || firstRun || window.ball?.servingState > 0) return clearBanner();
+    if (!current || endurance() || gameState !== "game" || firstRun || window.ball?.servingState > 0) return clearBanner();
     const points = matchPoints(oGameData.userScore, oGameData.enemyScore);
     const owner = points.user ? "user" : points.enemy ? "enemy" : null;
     if (!owner) return clearBanner();
@@ -104,7 +107,7 @@
     const team = current[key];
     team.pointsWon++;
     team[ball.statsServer === winner ? "servePointsWon" : "returnPointsWon"]++;
-    if (matchPoints(oGameData.userScore, oGameData.enemyScore)[other]) team.matchPointsSaved++;
+    if (!endurance() && matchPoints(oGameData.userScore, oGameData.enemyScore)[other]) team.matchPointsSaved++;
     const error = errorSide(ball, winner);
     if (error) current[error === "user" ? "player" : "opponent"].unforcedErrors++;
     // The opening run can join the previous match's closing run in the all-time totals.
@@ -124,7 +127,15 @@
     current.ralliesTracked++;
   }
   function finish() {
-    if (!current || !(wins(oGameData.userScore, oGameData.enemyScore) || wins(oGameData.enemyScore, oGameData.userScore))) return null;
+    if (!current) return null;
+    if (endurance()) {
+      if (!enduranceOver(oGameData.userScore, oGameData.enemyScore)) return null;
+      // Runs are kept out of the all-time record, so they never extend or break its streaks.
+      completed = { ...current, score: [oGameData.userScore, oGameData.enemyScore], won: oGameData.enemyScore === 0 };
+      abandon();
+      return clone(completed);
+    }
+    if (!(wins(oGameData.userScore, oGameData.enemyScore) || wins(oGameData.enemyScore, oGameData.userScore))) return null;
     completed = { ...current, score: [oGameData.userScore, oGameData.enemyScore], won: oGameData.userScore > oGameData.enemyScore };
     const totals = restore(window.famobi.localStorage.getItem(KEY));
     totals.matches++;

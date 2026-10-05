@@ -6,9 +6,9 @@
   const paddles = window.PaddleTypes;
   const handicap = window.HandicapChallenge;
   const stats = window.MatchStats;
-  const modeNames = { world: "World mode", finals: "Finals system", handicap: "CPU Handicap" };
+  const modeNames = { world: "World mode", finals: "Finals system", handicap: "CPU Handicap", endurance: "Endurance" };
   const original = { button: window.butEventHandler, complete: window.initGameComplete, frame: window.requestAnimFrame,
-    pause: window.initPause, resume: window.resumeGame };
+    pause: window.initPause, resume: window.resumeGame, score: window.updateScore };
   const screenFrames = new Set();
   window.requestAnimFrame = function(callback) {
     // The source can finish a match inside Ball.update, then queue one more
@@ -57,6 +57,7 @@
   const escape = value => String(value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
   let mode = null, state = null, activeMatch = null, lastResult = null;
   let handicapState = null;
+  let enduranceState = null;
   let matchResult = null;
   const platformProperties = window.famobi.getFeatureProperties.bind(window.famobi);
   window.famobi.getFeatureProperties = function(name) {
@@ -66,10 +67,15 @@
       // This also applies the same head start when restarting a paused match.
       return { ...properties, state: { ...properties.state, user_score: 0, enemy_score: activeMatch.startingScore } };
     }
+    if (name === "forced_mode" && mode === "endurance" && activeMatch) {
+      // Lift the source's first-to-11 finish; the run instead ends on the first lost point.
+      return { ...properties, state: { ...properties.state, user_score: 0, enemy_score: 0 }, override: { ...properties.override, max_score: 100 } };
+    }
     return properties;
   };
   const storageKey = (id, level = difficulty.selected) => `finals32:v1:${id}:${level}`;
   const handicapKey = (id, level) => `handicap:v1:${id}:${level}`;
+  const enduranceKey = (id, level) => `endurance:v1:${id}:${level}`;
   const eligible = () => [...countryFlags.aIds];
   function countryName(id) {
     const code = countryFlags.aAllCountryCodes[id];
@@ -133,6 +139,23 @@
   }
   function persistHandicap() { window.famobi.localStorage.setItem(handicapKey(handicapState.playerId, handicapState.difficulty), JSON.stringify(handicapState)); }
   function newHandicap() { return handicap.create(oGameData.userId, eligible(), difficulty.selected); }
+  function savedEndurance(level = difficulty.selected) {
+    try {
+      const saved = JSON.parse(window.famobi.localStorage.getItem(enduranceKey(oGameData.userId, level)));
+      const count = value => Number.isSafeInteger(value) && value >= 0;
+      if (saved?.version === 1 && count(saved.best) && saved.best <= 99 && count(saved.runs) && (saved.last === null || (count(saved.last) && saved.last <= saved.best))) {
+        return { ...saved, playerId: oGameData.userId, difficulty: level };
+      }
+    } catch {}
+    return { version: 1, best: 0, runs: 0, last: null, playerId: oGameData.userId, difficulty: level };
+  }
+  function persistEndurance() {
+    const { version, best, runs, last } = enduranceState;
+    window.famobi.localStorage.setItem(enduranceKey(enduranceState.playerId, enduranceState.difficulty), JSON.stringify({ version, best, runs, last }));
+  }
+  function enduranceScore(points, preview = false) {
+    return `<span class="handicap-score endurance-score${preview ? " mode-art" : ""}"${preview ? ' aria-hidden="true"' : ` aria-label="Best run: ${points} points"`}><span><small>${preview ? "RUN" : "BEST"}</small><b>${preview ? "\u221e" : points}</b></span></span>`;
+  }
   function handicapScore(cpu, preview = false) {
     return `<span class="handicap-score${preview ? " mode-art" : ""}"${preview ? ' aria-hidden="true"' : ` aria-label="Starting score: You 0, CPU ${cpu}"`}><span><small>YOU</small><b>0</b></span><span><small>CPU</small><b>${cpu}</b></span></span>`;
   }
@@ -159,6 +182,7 @@
         <button class="mode-option" data-action="world">${art("map")}<span class="mode-description"><strong>World mode</strong><span>Travel the world and work your way through the tour.</span><span class="option-action">Choose difficulty</span></span></button>
         <button class="mode-option" data-action="finals">${art("cup0")}<span class="mode-description"><strong>Finals system</strong><span>${description}</span><span class="option-action">Choose difficulty</span></span></button>
         <button class="mode-option" data-action="handicap">${handicapScore(6, true)}<span class="mode-description"><strong>CPU Handicap</strong><span>Start 0–6 down. Each win gives the CPU one more starting point.</span><span class="option-action">Choose difficulty</span></span></button>
+        <button class="mode-option" data-action="endurance">${enduranceScore(0, true)}<span class="mode-description"><strong>Endurance</strong><span>Keep scoring until you lose a single point. How long can you last?</span><span class="option-action">Choose difficulty</span></span></button>
       </div>
       <button class="quiet-button mode-back" data-action="home">Back to title</button>
     </div>`, "modeSelect");
@@ -206,18 +230,22 @@
       ${totals.matches ? "" : '<p class="stats-empty">No completed matches yet. Finish a match to start your record.</p>'}
       <dl class="stats-record"><div><dt>Matches played</dt><dd>${number(totals.matches)}</dd></div><div><dt>Won</dt><dd>${number(totals.wins)}</dd></div><div><dt>Lost</dt><dd>${number(totals.losses)}</dd></div><div><dt>Win rate</dt><dd>${totals.matches ? `${Math.round(100 * totals.wins / totals.matches)}%` : "\u2014"}</dd></div></dl>
       ${statsTable(totals, "Opponents", allTimeRows)}${rallySummary(totals)}${statsNote(true)}
-      <p class="stats-note">Stats save in this browser. Aces and point streaks count from when their tracking was added. Restarted or unfinished matches and CPU head starts are excluded.</p>
+      <p class="stats-note">Stats save in this browser. Aces and point streaks count from when their tracking was added. Restarted or unfinished matches, Endurance runs and CPU head starts are excluded.</p>
       <button class="play-button stats-play" data-action="play">Play</button>
     </div>`, "playerStats");
   }
   function showMatchStats() {
     const result = matchResult;
     if (!result) return;
-    const next = result.mode === "finals" ? "Continue to finals" : result.mode === "handicap" ? "Continue challenge" : result.won ? "Continue world tour" : "Play again";
-    show(`<div class="stats-page"><header class="mode-header"><h1>${result.won ? "You won!" : "Match complete"}</h1><p>${modeNames[result.mode]} \u00b7 ${difficulty.profiles[result.difficulty].label}</p></header>
+    const run = result.mode === "endurance";
+    const next = result.mode === "finals" ? "Continue to finals" : result.mode === "handicap" ? "Continue challenge" : run ? "Continue" : result.won ? "Continue world tour" : "Play again";
+    const heading = run ? (result.newBest ? "New best run!" : "Run over") : result.won ? "You won!" : "Match complete";
+    show(`<div class="stats-page"><header class="mode-header"><h1>${heading}</h1><p>${modeNames[result.mode]} \u00b7 ${difficulty.profiles[result.difficulty].label}</p></header>
       <div class="result-score" aria-label="Final score: You ${result.score[0]}, opponent ${result.score[1]}"><div>${flag(result.playerId)}<span>You \u00b7 ${escape(countryName(result.playerId))}</span><strong>${result.score[0]}</strong></div><span class="result-versus" aria-hidden="true">\u2013</span><div>${flag(result.opponentId)}<span>${escape(countryName(result.opponentId))} (CPU)</span><strong>${result.score[1]}</strong></div></div>
-      <h2 class="stats-heading">Match stats</h2>${statsTable(result, "Opponent")}
+      ${run ? `<p class="last-result" role="status">You scored ${result.score[0]} point${result.score[0] === 1 ? "" : "s"} in a row. Best: ${result.best}.</p>` : ""}
+      <h2 class="stats-heading">Match stats</h2>${statsTable(result, "Opponent", run ? statRows.filter(([key]) => !["matchPointsSaved", "longestStreak"].includes(key)) : statRows)}
       ${rallySummary(result)}${statsNote()}
+      ${run ? '<p class="stats-note">Endurance runs are not added to your all-time stats or point and match streaks.</p>' : ""}
       ${result.startingScore[1] ? `<p class="stats-note">The CPU started with ${result.startingScore[1]} points. Points won counts only points played.</p>` : ""}
       <nav class="stats-actions" aria-label="After match"><button class="play-button" data-action="continue-result">${next}</button><button class="quiet-button" data-action="home">Back to title</button></nav>
     </div>`, "matchStats");
@@ -226,6 +254,7 @@
     if (gameState !== "matchStats" || !matchResult) return;
     if (matchResult.mode === "finals") return showBracket();
     if (matchResult.mode === "handicap") return showHandicap();
+    if (matchResult.mode === "endurance") return showEndurance();
     stopScreen();
     hide();
     // Preserve the source's next-opponent, cup-map and loss/retry routing.
@@ -240,13 +269,13 @@
   function showDifficulty() {
     const choices = Object.entries(difficulty.profiles).map(([level, profile]) => {
       const saved = mode === "finals" ? savedFinals(level) : mode === "handicap" ? savedHandicap(level) : null;
-      const action = saved?.status === "active" ? (mode === "handicap" ? `Play from 0–${handicap.START_SCORES[saved.stage]}` : `Continue ${tournament.ROUND_NAMES[saved.round].toLowerCase()}`)
+      const action = mode === "endurance" ? (savedEndurance(level).runs ? `Best run: ${savedEndurance(level).best}` : "Start endurance") : saved?.status === "active" ? (mode === "handicap" ? `Play from 0–${handicap.START_SCORES[saved.stage]}` : `Continue ${tournament.ROUND_NAMES[saved.round].toLowerCase()}`)
         : saved ? "View results" : mode === "finals" ? "Start finals" : mode === "handicap" ? "Start at 0–6" : "Play world mode";
       return `<button class="difficulty-option" data-action="difficulty" data-level="${level}"><span class="difficulty-copy"><strong>${profile.label}</strong><span>${profile.description}</span></span><span class="difficulty-action">${action}</span></button>`;
     }).join("");
     show(`<div class="difficulty-page"><header class="mode-header"><h1>Choose difficulty</h1><div class="chosen-country">${flag(oGameData.userId)}<strong>${escape(countryName(oGameData.userId))}</strong><span>${modeNames[mode]}</span></div></header>
       <div class="difficulty-options">${choices}</div>
-      ${mode !== "world" ? `<p class="difficulty-note">Each difficulty keeps its own ${mode === "finals" ? "finals" : "handicap"} progress.</p>` : ""}
+      ${mode !== "world" ? `<p class="difficulty-note">Each difficulty keeps its own ${mode === "finals" ? "finals" : mode === "handicap" ? "handicap" : "endurance"} ${mode === "endurance" ? "best" : "progress"}.</p>` : ""}
       <button class="quiet-button mode-back" data-action="modes">Back to game modes</button></div>`, "difficultySelect");
   }
   function chooseDifficulty(level) {
@@ -260,6 +289,9 @@
       state = savedFinals() ?? newDraw();
       persist();
       showBracket();
+    } else if (mode === "endurance") {
+      enduranceState = savedEndurance();
+      showEndurance();
     } else {
       handicapState = savedHandicap() ?? newHandicap();
       persistHandicap();
@@ -303,6 +335,46 @@
     playSound(handicapState.lastResult.won ? "winGame" : "loseGame");
     showMatchStats();
   }
+  function showEndurance() {
+    if (!enduranceState) return;
+    const last = enduranceState.last;
+    const result = last === null ? "" : `<p class="last-result" role="status">Last run: ${last} point${last === 1 ? "" : "s"}.</p>`;
+    show(`<div class="handicap-page"><header class="finals-header"><div><h1>Endurance</h1><p>Win as many points in a row as you can. Your run ends the moment you lose a point.</p>${result}</div><button class="quiet-button" data-action="modes">Choose mode</button></header>
+      <p class="finals-difficulty">${difficulty.profiles[enduranceState.difficulty].label} difficulty</p>
+      <div class="chosen-country">${flag(enduranceState.playerId)}<strong>${escape(countryName(enduranceState.playerId))}</strong><span>vs a random CPU opponent</span></div>
+      <section class="match-brief" aria-label="Best run">${enduranceScore(enduranceState.best)}<button class="play-button" data-action="play-endurance">${enduranceState.runs ? "Start new run" : "Start run"}</button></section>
+      <p>${enduranceState.runs ? `${number(enduranceState.runs)} run${enduranceState.runs === 1 ? "" : "s"} played.` : "No runs yet."} Runs stop at the game's 99-point cap. They don't count toward your all-time stats or streaks.</p>
+    </div>`, "enduranceProgress");
+  }
+  function playEndurance() {
+    if (activeMatch || mode !== "endurance" || gameState !== "enduranceProgress" || !enduranceState) return;
+    const opponents = eligible().filter(id => id !== enduranceState.playerId);
+    if (!opponents.length) return;
+    activeMatch = { opponentId: opponents[Math.floor(Math.random() * opponents.length)] };
+    stopScreen();
+    hide();
+    gameState = "enduranceLaunching";
+    difficulty.select(enduranceState.difficulty);
+    Object.assign(oGameData, { userId: enduranceState.playerId, enemyId: activeMatch.opponentId, cupId: 0, gameId: 0 });
+    initGame();
+  }
+  function finishEndurance() {
+    if (!activeMatch || !enduranceState || gameState !== "game") return;
+    const points = matchResult.score[0];
+    const newBest = points > enduranceState.best;
+    enduranceState = { ...enduranceState, best: Math.max(enduranceState.best, points), runs: enduranceState.runs + 1, last: points };
+    activeMatch = null;
+    persistEndurance();
+    Object.assign(matchResult, { newBest, best: enduranceState.best });
+    playSound(newBest ? "winGame" : "loseGame");
+    showMatchStats();
+  }
+  // The source only ends a match at 11 (lifted for Endurance), so end the run on the opponent's first point.
+  window.updateScore = function(winner, ...args) {
+    const result = original.score.call(this, winner, ...args);
+    if (mode === "endurance" && activeMatch && winner === "enemy" && gameState === "game") window.initGameComplete();
+    return result;
+  };
   function teamLine(id, score, winner, playerId, placeholder) {
     if (id === null) return `<div class="bracket-team pending"><span>${placeholder}</span></div>`;
     return `<div class="bracket-team${winner === id ? " won" : ""}${id === playerId ? " player-team" : ""}">${flag(id)}<span class="team-name" title="${escape(countryName(id))}">${escape(countryName(id))}${id === playerId ? '<small>YOU</small>' : ""}</span><b>${score ?? ""}</b></div>`;
@@ -366,6 +438,7 @@
     matchResult = result;
     if (mode === "finals") return finishFinal();
     if (mode === "handicap") return finishHandicap();
+    if (mode === "endurance") return finishEndurance();
     const completion = original.complete();
     gameState = "matchFinishing";
     return completion;
@@ -405,11 +478,11 @@
       saveDataHandler.saveData();
       return showModes();
     }
-    if ((mode === "finals" || mode === "handicap") && id === "quitFromPause") {
+    if (["finals", "handicap", "endurance"].includes(mode) && id === "quitFromPause") {
       stats.abandon();
       activeMatch = null;
       if (window.audioType === 1 && !window.muted) { Howler.mute(false); playMusic(); }
-      return mode === "finals" ? showBracket() : showHandicap();
+      return mode === "finals" ? showBracket() : mode === "handicap" ? showHandicap() : showEndurance();
     }
     const result = original.button(id, data);
     if (["tickFromTut", "playFromPause"].includes(id)) stats.announce();
@@ -423,7 +496,7 @@
     const button = event.target.closest("button[data-action]");
     if (!button || !flow.contains(button)) return;
     const action = button.dataset.action;
-    if (["play", "play-final", "play-handicap"].includes(action)) window.GameFullscreen.enter();
+    if (["play", "play-final", "play-handicap", "play-endurance"].includes(action)) window.GameFullscreen.enter();
     if (Object.hasOwn(modeNames, action)) chooseMode(action);
     else if (action === "difficulty") chooseDifficulty(button.dataset.level);
     else if (action === "country") chooseCountry();
@@ -435,6 +508,7 @@
     else if (action === "continue-result") continueResult();
     else if (action === "play-final") playFinal();
     else if (action === "play-handicap") playHandicap();
+    else if (action === "play-endurance") playEndurance();
     else if (action === "new-handicap" && mode === "handicap" && gameState === "handicapProgress" && handicapState?.status === "complete") {
       difficulty.select(handicapState.difficulty); handicapState = newHandicap(); persistHandicap(); showHandicap();
     }
@@ -446,7 +520,8 @@
     }
   });
   window.TableTennisModes = {
-    chooseCountry, chooseMode, chooseDifficulty, showTitle, showStats, showModes, showBracket, playFinal, showHandicap, playHandicap,
+    chooseCountry, chooseMode, chooseDifficulty, showTitle, showStats, showModes, showBracket, playFinal, showHandicap, playHandicap, showEndurance, playEndurance,
+    get endurance() { return enduranceState ? JSON.parse(JSON.stringify(enduranceState)) : null; },
     get handicap() { return handicapState ? JSON.parse(JSON.stringify(handicapState)) : null; },
     get mode() { return mode; }, get finals() { return state ? JSON.parse(JSON.stringify(state)) : null; }
   };
