@@ -10,7 +10,7 @@ The first mouse press, tap or Enter/Space activation anywhere in the game reques
 
 ## Game flow
 
-The title offers **Play** and **Stats**. Press Play, choose your country on first use, choose **World mode**, **Finals system**, **CPU Handicap**, or **Endurance**, then choose **Easy**, **Medium**, **Challenging**, or **Hard**. Later visits reuse your saved country; Change country remains available in the mode chooser.
+The title offers **Play** and **Stats**. Australia replaces Russia among the 40 playable countries and in every mode's opponents; Sweden replaces Russia as the World tour's final opponent. Press Play, choose your country on first use, choose **World mode**, **Finals system**, **CPU Handicap**, or **Endurance**, then choose **Easy**, **Medium**, **Challenging**, or **Hard**. Later visits reuse your saved country; Change country remains available in the mode chooser.
 
 - World mode keeps the original tour and its saved progress.
 - Finals draws 32 distinct countries, including yours, into a single-elimination bracket: round of 32, round of 16, quarterfinals, semifinals, final.
@@ -36,6 +36,7 @@ Stats on the title adds matches played, wins, losses and win rate to cumulative 
 
 - [reference-game/game.js](reference-game/game.js): copied game and library bundle; identical to the supplied source at the start of this baseline.
 - [reference-game/local-platform.js](reference-game/local-platform.js): local platform callbacks and separate saved progress.
+- [reference-game/country-roster.js](reference-game/country-roster.js): replaces Russia with Australia (and Sweden in the World tour) without editing the bundle.
 - [reference-game/fullscreen.js](reference-game/fullscreen.js): browser fullscreen requests, title toggle state and resize handling.
 - [reference-game/game-modes.js](reference-game/game-modes.js): country/mode navigation and finals integration.
 - [reference-game/match-stats.js](reference-game/match-stats.js): match bookkeeping, match-point announcements and persistent player totals.
@@ -60,6 +61,8 @@ Run `node reference-game/finals.test.cjs` for 12 finals checks covering unique 3
 Run `node reference-game/difficulty.test.cjs` for 11 difficulty checks covering all four levels in all three modes at three viewport sizes, per-level saves, legacy migration, reaction timing at 30/60/144 FPS, motion limits, shot pace/spin/placement, unchanged player strokes, and real ball-to-opponent contact in a seeded 405-shot comparison covering recovery from both sides, both spin directions and faster/wider shots. The suite also verifies occasional CPU mishits and real ball flights that score opponent unforced errors. That comparison is a regression scenario, not a player win-rate estimate.
 
 Run `node reference-game/handicap.test.cjs` for 11 CPU Handicap checks: five actual starting scores, wins/losses, deuce, completion, pause/restart/quit, saved progress, country/difficulty isolation, failed storage, World/Finals score isolation, and immediate next-stage transitions.
+
+Run `node reference-game/country-roster.test.cjs` to check that Australia replaces Russia in the chooser, Finals draws and World tour, and that a saved Russia selection returns to the country chooser.
 
 Run `node reference-game/endurance.test.cjs` for Endurance checks: runs past 11 ending on the first lost point at three viewport sizes, unchanged all-time totals and streaks, hidden match-point banners, pause/restart/quit, the 99-point cap, per-country/difficulty bests across reloads, and failed storage.
 
