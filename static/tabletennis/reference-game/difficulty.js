@@ -11,13 +11,13 @@
       spread: 0.74, accuracyError: 0.125, pressureError: 0.18, placement: 0.65, paceCap: 0.53, spin: 0.65, spinChance: 0.64,
       readjustAt: 0.28, mishitChance: 0.043, pressureMishit: 0.06 }),
     challenging: Object.freeze({ label: "Challenging", description: "Sharper reactions and stronger spin, with room to recover.",
-      skill: 0.91, reaction: 0.025, reactionVariation: 0.025, travel: 1.78, tracking: 1.85, movement: 930, recovery: 1.58,
-      spread: 0.85, accuracyError: 0.08, pressureError: 0.13, placement: 0.84, paceCap: 0.575, spin: 0.86, spinChance: 0.80,
-      readjustAt: 0.38, mishitChance: 0.030, pressureMishit: 0.045 }),
+      skill: 0.78, reaction: 0.045, reactionVariation: 0.030, travel: 1.56, tracking: 1.62, movement: 815, recovery: 1.42,
+      spread: 0.78, accuracyError: 0.105, pressureError: 0.16, placement: 0.73, paceCap: 0.55, spin: 0.74, spinChance: 0.70,
+      readjustAt: 0.32, mishitChance: 0.038, pressureMishit: 0.055 }),
     hard: Object.freeze({ label: "Hard", description: "Fast reactions, stronger spin, and returns into open space.",
-      skill: 0.99, reaction: 0.010, reactionVariation: 0.015, travel: 1.92, tracking: 2.02, movement: 1000, recovery: 1.72,
-      spread: 0.89, accuracyError: 0.065, pressureError: 0.11, placement: 0.90, paceCap: 0.59, spin: 0.94, spinChance: 0.86,
-      readjustAt: 0.42, mishitChance: 0.024, pressureMishit: 0.035 })
+      skill: 0.88, reaction: 0.020, reactionVariation: 0.020, travel: 1.72, tracking: 1.78, movement: 900, recovery: 1.54,
+      spread: 0.83, accuracyError: 0.088, pressureError: 0.14, placement: 0.80, paceCap: 0.57, spin: 0.84, spinChance: 0.78,
+      readjustAt: 0.36, mishitChance: 0.032, pressureMishit: 0.048 })
   });
   const valid = id => Object.hasOwn(profiles, id);
   const clamp = (value, low, high) => Math.min(high, Math.max(low, value));
