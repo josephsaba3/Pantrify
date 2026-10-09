@@ -18,7 +18,7 @@ During an active handicap match, `game-modes.js` supplies `user_score: 0` and th
 | --- | --- | --- | --- | --- |
 | Easy | 140-200 ms | 540 | 0.46 | 0.36 |
 | Medium | 75-120 ms | 740 | 0.53 | 0.65 |
-| Challenging | 45-75 ms | 860 | 0.575 | 0.86 |
+| Challenging | 55-75 ms | 820 | 0.575 | 0.86 |
 | Hard | 10-25 ms | 1000 | 0.59 | 0.94 |
 
 *These are source-engine units, not physical m/s or RPM, and the shot caps are before paddle bonuses. Pursuit and distance can make movement slower than the cap. The selected level replaces the original AI skill ramp in World mode, while its countries, visual progression, and saved position remain intact.
