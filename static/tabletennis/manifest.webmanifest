@@ -1,0 +1,18 @@
+{
+  "id": "/tabletennis/",
+  "name": "Table Tennis World Tour",
+  "short_name": "Table Tennis",
+  "description": "Table tennis against the CPU: World tour, Finals, CPU Handicap and Endurance.",
+  "start_url": "/tabletennis/reference-game/index.html",
+  "scope": "/tabletennis/",
+  "display": "fullscreen",
+  "background_color": "#000000",
+  "theme_color": "#1F6F4A",
+  "icons": [
+    { "src": "/tabletennis/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/tabletennis/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/tabletennis/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/tabletennis/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/tabletennis/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
