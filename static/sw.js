@@ -4,6 +4,7 @@
 const CACHE = 'pantrify-v1';
 const SHELL = [
   '/',
+  '/app/',
   '/static/styles.css',
   '/static/autocomplete.css',
   '/static/new-list-dialog.css',
@@ -39,6 +40,6 @@ self.addEventListener('fetch', event => {
         return response;
       })
       .catch(() => caches.match(request, { ignoreSearch: true })
-        .then(cached => cached || (request.mode === 'navigate' ? caches.match('/') : Response.error())))
+        .then(cached => cached || (request.mode === 'navigate' ? caches.match('/app/') : Response.error())))
   );
 });
