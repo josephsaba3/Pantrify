@@ -8,6 +8,10 @@ The original paddle movement, aiming, ball physics, and match rendering are reta
 
 The first mouse press, tap or Enter/Space activation anywhere in the game requests browser fullscreen on supported browsers. Requests run before the canvas handles the input and retry on a later gesture if rejected. Firefox and other browsers require a user gesture, so a fresh page load alone cannot force fullscreen. The title also has a Full screen / Exit full screen toggle. Fullscreen includes the entire game, so menus, results and the court stay together; Escape exits and resizes the game without automatically re-entering. Play continues normally if fullscreen is blocked or unsupported, and the title toggle remains available to retry where supported.
 
+## Install as its own app
+
+The game is a separate installable web app from Pantrify. Open `https://YOUR-HOST/tabletennis/` in Chrome on Android, then tap **⋮ → Add to Home screen / Install app**. It gets its own icon and opens full-screen. Its manifest (`manifest.webmanifest`) and service worker (`sw.js`) are scoped to `/tabletennis/`, so they never touch Pantrify's list, data or offline cache. After one full online play, the game also works offline. Install it from the game's own address; following a link to the game from inside installed Pantrify opens it in Pantrify's window.
+
 ## Game flow
 
 The title offers **Play** and **Stats**. Australia replaces Russia among the 40 playable countries and in every mode's opponents; Sweden replaces Russia as the World tour's final opponent. Press Play, choose your country on first use, choose **World mode**, **Finals system**, **CPU Handicap**, or **Endurance**, then choose **Easy**, **Medium**, **Challenging**, or **Hard**. Later visits reuse your saved country; Change country remains available in the mode chooser.
