@@ -188,11 +188,6 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json(state())
         elif path in ("/", "/index.html", "/app/"):
             self.serve_file("static/index.html")
-        elif path == "/app":
-            self.send_response(HTTPStatus.PERMANENT_REDIRECT)
-            self.send_header("Location", "/app/" + (f"?{request.query}" if request.query else ""))
-            self.send_header("Content-Length", "0")
-            self.end_headers()
         elif path == "/sw.js":
             self.serve_file("static/sw.js", cache_control="no-cache")
         elif path == "/tabletennis":
